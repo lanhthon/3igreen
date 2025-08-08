@@ -1,0 +1,827 @@
+```html
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hướng Dẫn Quản Lý Sản Phẩm</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Arial&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 90%;
+            margin: 1rem auto;
+            background: white;
+            padding: 0;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            border-radius: 0.375rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .header-left h1 {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .header-right img {
+            width: 150px;
+            height: 150px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .toolbar {
+            background: white;
+            padding: 0.75rem 1rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .toolbar button {
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .toolbar button:hover {
+            transform: scale(1.05);
+        }
+
+        .modal-content {
+            background: #E8F5E8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .modal-header h2 {
+            font-size: 14px;
+            font-weight: bold;
+            color: #8EC14A;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .form-group input,
+        .form-group select {
+            font-size: 11px;
+            padding: 4px;
+            border: none;
+            border-bottom: 1px dotted #999;
+            background: transparent;
+        }
+
+        .form-group select {
+            background: white;
+        }
+
+        .input-with-button {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .add-option-btn {
+            padding: 0.25rem 0.5rem;
+            background-color: #2563eb;
+            color: white;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            margin-top: 1rem;
+        }
+
+        .table th {
+            background: #8EC14A;
+            color: white;
+            padding: 8px 4px;
+            text-align: center;
+            font-weight: bold;
+            border: 1px solid #2E7D32;
+            font-size: 9px;
+        }
+
+        .table td {
+            padding: 4px;
+            text-align: center;
+            border: 1px solid #8EC14A;
+            background: #F1F8E9;
+        }
+
+        .annotation {
+            font-size: 0.75rem;
+            color: #4a5568;
+            background: #e8f5e8;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #2d3748;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        code {
+            background-color: #f3f4f6;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+        }
+
+        .note-box {
+            background: #E8F5E8;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 10px;
+            margin-top: 1rem;
+        }
+
+        @media print {
+
+            .no-print,
+            .annotation,
+            .tooltip-text,
+            .toolbar {
+                display: none !important;
+            }
+
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                margin: 0;
+                box-shadow: none;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="toolbar no-print">
+        <div class="tooltip">
+            <button class="bg-blue-600 hover:bg-blue-700"><i class="fas fa-plus mr-2"></i>Thêm SP Gốc</button>
+            <span class="tooltip-text">Mở biểu mẫu để thêm sản phẩm gốc mới.</span>
+        </div>
+        <div class="tooltip">
+            <button class="bg-green-600 hover:bg-green-700"><i class="fas fa-plus mr-2"></i>Thêm SP Chi Tiết</button>
+            <span class="tooltip-text">Mở biểu mẫu để thêm sản phẩm chi tiết.</span>
+        </div>
+        <div class="tooltip">
+            <button class="bg-blue-600 hover:bg-blue-700"><i class="fas fa-cog mr-2"></i>Quản lý Dữ liệu</button>
+            <span class="tooltip-text">Quản lý thuộc tính, loại, nhóm sản phẩm, và đơn vị.</span>
+        </div>
+        <div class="tooltip">
+            <button class="bg-red-500 hover:bg-red-600"><i class="fas fa-trash mr-2"></i>Xóa đã chọn</button>
+            <span class="tooltip-text">Xóa các sản phẩm được chọn trong danh sách.</span>
+        </div>
+    </div>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>HƯỚNG DẪN QUẢN LÝ SẢN PHẨM</h1>
+                <p class="text-sm">Hướng dẫn sử dụng giao diện quản lý sản phẩm</p>
+                <div class="annotation no-print">Hướng dẫn chi tiết cách thêm, sửa, và quản lý sản phẩm như “Gối đỡ PU
+                    Foam & Cùm Ula 3i-Fix loại đế vuông”.</div>
+            </div>
+            <div class="header-right">
+                <div class="tooltip">
+                    <img src="logo.png" alt="Logo Công ty" class="logo">
+                    <span class="tooltip-text">Logo công ty (3iGreen).</span>
+                </div>
+            </div>
+        </div>
+        <div class="p-5">
+            <p class="text-sm mb-6 text-gray-700">Hướng dẫn này giúp bạn sử dụng giao diện quản lý sản phẩm để thêm,
+                sửa, và quản lý các sản phẩm như “Gối đỡ PU Foam & Cùm Ula 3i-Fix loại đế vuông”. Giao diện hiển thị
+                danh sách sản phẩm chi tiết, bộ lọc, và các nút chức năng. Các biểu mẫu có gợi ý (tooltip, chú thích, ví
+                dụ) để nhập thông tin dễ dàng.</p>
+
+            <!-- Section: Overview -->
+            <div class="mb-8">
+                <h2 class="text-base font-bold mb-4">1. Tổng Quan Giao Diện</h2>
+                <p class="text-sm mb-4">Giao diện quản lý sản phẩm bao gồm các phần chính:</p>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Phần</th>
+                            <th>Mô tả</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Bộ lọc</strong></td>
+                            <td>Lọc sản phẩm theo Nhóm (Vật tư thành phẩm bán thành phẩm), Loại (Gối đỡ PU Foam & Cùm
+                                Ula 3i-Fix loại đế vuông, tỷ trọng 130 - 190kg/m3), hoặc tìm kiếm bằng mã/tên sản phẩm.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Danh sách sản phẩm</strong></td>
+                            <td>Hiển thị thông tin chi tiết (Mã SKU, Tên Biến Thể, Giá, Tồn kho) với các nút chỉnh sửa,
+                                xóa, và quản lý tồn kho.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Nút chức năng</strong></td>
+                            <td>Bao gồm “Thêm SP Gốc”, “Thêm SP Chi Tiết”, “Quản lý Dữ liệu”, và “Xóa đã chọn”.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Phân trang</strong></td>
+                            <td>Chọn số sản phẩm mỗi trang (10, 25, 50, 100, hoặc tất cả).</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="note-box">
+                    <p><strong>Chú thích</strong>: Di chuột vào nhãn trong biểu mẫu để xem gợi ý (tooltip). Các trường
+                        có dấu (*) là bắt buộc.</p>
+                </div>
+            </div>
+
+            <!-- Section: Sản Phẩm Gốc -->
+            <div class="mb-8">
+                <h2 class="text-base font-bold mb-4">2. Quản Lý Sản Phẩm Gốc</h2>
+                <p class="text-sm mb-4">Sản phẩm gốc là dòng sản phẩm chung (ví dụ: Gối đỡ PU Foam & Cùm Ula 3i-Fix loại
+                    đế vuông). Bạn có thể thêm mới hoặc chỉnh sửa qua nút “Thêm SP Gốc” hoặc biểu tượng <i
+                        class="fas fa-edit"></i> trong cột “Tên SP Gốc”.</p>
+                <h3 class="text-sm font-bold mb-2">Biểu Mẫu Sản Phẩm Gốc</h3>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Thêm Sản Phẩm Gốc Mới</h2>
+                        <button class="text-gray-500"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="p-4">
+                        <div class="annotation mb-4">Nhập thông tin sản phẩm gốc (ví dụ: Gối đỡ PU Foam & Cùm Ula 3i-Fix
+                            loại đế vuông). Các trường có dấu (*) là bắt buộc. Nhấn Tab để chuyển giữa các trường.</div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <div class="tooltip">
+                                    <label>Tên Sản Phẩm Gốc (*)</label>
+                                    <span class="tooltip-text">Tên chung của dòng sản phẩm, ví dụ: Gối đỡ PU Foam & Cùm
+                                        Ula 3i-Fix loại đế vuông.</span>
+                                </div>
+                                <input type="text" placeholder="Ví dụ: Gối đỡ PU Foam & Cùm Ula 3i-Fix loại đế vuông"
+                                    disabled>
+                                <div class="annotation">Nhập tên dòng sản phẩm (ví dụ: Gối đỡ PU Foam & Cùm Ula 3i-Fix
+                                    loại đế vuông).</div>
+                            </div>
+                            <div class="form-group">
+                                <div class="tooltip">
+                                    <label>Mã Gốc (Base SKU) (*)</label>
+                                    <span class="tooltip-text">Mã duy nhất cho sản phẩm gốc.</span>
+                                </div>
+                                <input type="text" placeholder="Ví dụ: PU" disabled>
+                                <div class="annotation">Nhập mã duy nhất (ví dụ: PU).</div>
+                            </div>
+                            <div class="form-group">
+                                <div class="tooltip">
+                                    <label>Tiền tố Mã (SKU Prefix)</label>
+                                    <span class="tooltip-text">Tiền tố để tạo mã cho sản phẩm chi tiết.</span>
+                                </div>
+                                <input type="text" placeholder="Ví dụ: PU" disabled>
+                                <div class="annotation">Nhập tiền tố mã (ví dụ: PU). Để trống nếu không cần.</div>
+                            </div>
+                            <div class="form-group">
+                                <div class="tooltip">
+                                    <label>Tiền tố Tên (Name Prefix)</label>
+                                    <span class="tooltip-text">Tiền tố để tạo tên sản phẩm chi tiết.</span>
+                                </div>
+                                <input type="text" placeholder="Ví dụ: Gối đỡ PU Foam" disabled>
+                                <div class="annotation">Nhập tiền tố tên (ví dụ: Gối đỡ PU Foam). Để trống nếu không
+                                    cần.</div>
+                            </div>
+                            <div class="form-group">
+                                <div class="tooltip">
+                                    <label>Nhóm Sản Phẩm (*)</label>
+                                    <span class="tooltip-text">Chọn nhóm để phân loại sản phẩm.</span>
+                                </div>
+                                <select disabled>
+                                    <option>-- Chọn nhóm --</option>
+                                    <option>Vật tư thành phẩm bán thành phẩm</option>
+                                </select>
+                                <div class="annotation">Chọn nhóm sản phẩm (ví dụ: Vật tư thành phẩm bán thành phẩm).
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="tooltip">
+                                    <label>Đơn Vị Cơ Sở (*)</label>
+                                    <span class="tooltip-text">Chọn đơn vị tính mặc định.</span>
+                                </div>
+                                <select disabled>
+                                    <option>-- Chọn đơn vị --</option>
+                                    <option>Bộ</option>
+                                    <option>Cái</option>
+                                </select>
+                                <div class="annotation">Chọn đơn vị tính (ví dụ: Bộ, Cái).</div>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-end gap-2">
+                            <button type="button" class="bg-gray-600 text-white px-3 py-1 rounded text-xs">Hủy</button>
+                            <button type="button" class="bg-green-600 text-white px-3 py-1 rounded text-xs">Lưu</button>
+                        </div>
+                    </div>
+                </div>
+                <h3 class="text-sm font-bold mt-6 mb-2">Hướng Dẫn Sử Dụng</h3>
+                <ol class="list-decimal ml-6 text-sm space-y-2">
+                    <li>Nhấn nút <code>Thêm SP Gốc</code> (màu xanh dương) hoặc biểu tượng <i class="fas fa-edit"></i>
+                        trong cột “Tên SP Gốc”.</li>
+                    <li>Điền các trường bắt buộc (*):
+                        <ul class="list-disc ml-6">
+                            <li><strong>Tên Sản Phẩm Gốc</strong>: Nhập tên chung (VD: Gối đỡ PU Foam & Cùm Ula 3i-Fix
+                                loại đế vuông).</li>
+                            <li><strong>Mã Gốc (Base SKU)</strong>: Nhập mã duy nhất (VD: PU).</li>
+                            <li><strong>Nhóm Sản Phẩm</strong>: Chọn nhóm (VD: Vật tư thành phẩm bán thành phẩm).</li>
+                            <li><strong>Đơn Vị Cơ Sở</strong>: Chọn đơn vị (VD: Bộ).</li>
+                        </ul>
+                    </li>
+                    <li>Điền các trường tùy chọn:
+                        <ul class="list-disc ml-6">
+                            <li><strong>Tiền tố Mã (SKU Prefix)</strong>: Nhập để tạo mã sản phẩm chi tiết (VD: PU).
+                            </li>
+                            <li><strong>Tiền tố Tên (Name Prefix)</strong>: Nhập để tạo tên sản phẩm chi tiết (VD: Gối
+                                đỡ PU Foam).</li>
+                        </ul>
+                    </li>
+                    <li>Nhấn nút <code>Lưu</code> (màu xanh lá) để lưu sản phẩm gốc.</li>
+                </ol>
+                <div class="note-box">
+                    <p><strong>Chú thích</strong>: Mã Gốc phải duy nhất. Di chuột vào nhãn để xem gợi ý. Sản phẩm gốc
+                        cần được tạo trước khi thêm sản phẩm chi tiết.</p>
+                </div>
+            </div>
+
+            <!-- Section: Sản Phẩm Chi Tiết -->
+            <div class="mb-8">
+                <h2 class="text-base font-bold mb-4">3. Quản Lý Sản Phẩm Chi Tiết</h2>
+                <p class="text-sm mb-4">Sản phẩm chi tiết là các biến thể cụ thể của sản phẩm gốc (ví dụ: Gối đỡ PU Foam
+                    DN20x5mmx50mm TQ, tỷ trọng 130 - 190kg/m3). Bạn có thể thêm mới qua nút “Thêm SP Chi Tiết” hoặc
+                    chỉnh sửa qua biểu tượng <i class="fas fa-edit"></i>.</p>
+                <h3 class="text-sm font-bold mb-2">Biểu Mẫu Sản Phẩm Chi Tiết</h3>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Thêm Sản Phẩm Chi Tiết Mới</h2>
+                        <button class="text-gray-500"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="p-4">
+                        <div class="annotation mb-4">Nhập thông tin sản phẩm chi tiết. Mã SKU được tạo tự động, Tên Biến
+                            Thể được tạo tự động nhưng có thể chỉnh sửa. Các thuộc tính hiển thị dựa trên sản phẩm gốc
+                            (Mã Gốc: PU). Nhấn Tab để chuyển giữa các trường.</div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <div class="tooltip">
+                                    <label>Sản Phẩm Gốc (*)</label>
+                                    <span class="tooltip-text">Chọn sản phẩm gốc để tạo biến thể.</span>
+                                </div>
+                                <select disabled>
+                                    <option>-- Chọn sản phẩm gốc --</option>
+                                    <option>Gối đỡ PU Foam & Cùm Ula 3i-Fix loại đế vuông</option>
+                                </select>
+                                <div class="annotation">Chọn sản phẩm gốc (ví dụ: Gối đỡ PU Foam & Cùm Ula 3i-Fix loại
+                                    đế vuông).</div>
+                            </div>
+                            <div class="form-group">
+                                <div class="tooltip">
+                                    <label>Tên Biến Thể (*)</label>
+                                    <span class="tooltip-text">Tên chi tiết của biến thể, tự động tạo nhưng có thể chỉnh
+                                        sửa.</span>
+                                </div>
+                                <input type="text" placeholder="Ví dụ: Gối đỡ PU Foam DN20x5mmx50mm TQ" disabled>
+                                <div class="annotation">Tên được tạo tự động, có thể chỉnh sửa (ví dụ: Gối đỡ PU Foam
+                                    DN20x5mmx50mm TQ).</div>
+                            </div>
+                            <div class="form-group">
+                                <div class="tooltip">
+                                    <label>Mã Biến Thể (SKU) (*)</label>
+                                    <span class="tooltip-text">Mã duy nhất cho biến thể, tự động tạo.</span>
+                                </div>
+                                <input type="text" readonly placeholder="Ví dụ: PU 20mmx5mmx50mm-TQ" disabled>
+                                <div class="annotation">Mã SKU được tạo tự động (không chỉnh sửa).</div>
+                            </div>
+                            <div class="form-group">
+                                <div class="tooltip">
+                                    <label>Hậu Tố SKU</label>
+                                    <span class="tooltip-text">Hậu tố thêm vào mã SKU và tên biến thể.</span>
+                                </div>
+                                <input type="text" placeholder="Ví dụ: TQ, HT" disabled>
+                                <div class="annotation">Nhập hậu tố (ví dụ: TQ cho Trung Quốc, HT cho Hàn Quốc).</div>
+                            </div>
+                            <div class="form-group">
+                                <div class="tooltip">
+                                    <label>Giá Gốc</label>
+                                    <span class="tooltip-text">Giá bán của biến thể (VNĐ).</span>
+                                </div>
+                                <input type="number" placeholder="Ví dụ: 100000" disabled>
+                                <div class="annotation">Nhập giá bán (ví dụ: 100000 VNĐ).</div>
+                            </div>
+                            <div class="form-group">
+                                <div class="tooltip">
+                                    <label>Loại Phân Loại</label>
+                                    <span class="tooltip-text">Chọn loại phân loại cho biến thể.</span>
+                                </div>
+                                <select disabled>
+                                    <option>-- Chọn loại --</option>
+                                    <option>Gối đỡ PU Foam & Cùm Ula 3i-Fix loại đế vuông, tỷ trọng 130 - 190kg/m3
+                                    </option>
+                                    <option>Ula</option>
+                                </select>
+                                <div class="annotation">Chọn loại (ví dụ: Gối đỡ PU Foam & Cùm Ula 3i-Fix loại đế vuông,
+                                    tỷ trọng 130 - 190kg/m3). Để trống nếu không cần.</div>
+                            </div>
+                        </div>
+                        <hr class="my-4 border-gray-300">
+                        <h4 class="text-sm font-bold mb-4 text-green-600">Các Thuộc Tính</h4>
+                        <div class="annotation mb-4">Chọn giá trị thuộc tính (ví dụ: Đường kính trong: 20mm) dựa trên
+                            sản phẩm gốc (Mã Gốc: PU). Nhấn '+' để thêm giá trị mới.</div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <div class="tooltip">
+                                    <label>Đường kính trong</label>
+                                    <span class="tooltip-text">Chọn giá trị Đường kính trong.</span>
+                                </div>
+                                <div class="input-with-button">
+                                    <select disabled>
+                                        <option>-- Không chọn --</option>
+                                        <option>20mm</option>
+                                        <option>30mm</option>
+                                    </select>
+                                    <button type="button" class="add-option-btn" disabled>+</button>
+                                </div>
+                                <div class="annotation">Chọn giá trị (ví dụ: 20mm) hoặc nhấn '+' để thêm mới.</div>
+                            </div>
+                            <div class="form-group">
+                                <div class="tooltip">
+                                    <label>Độ dày</label>
+                                    <span class="tooltip-text">Chọn giá trị Độ dày.</span>
+                                </div>
+                                <div class="input-with-button">
+                                    <select disabled>
+                                        <option>-- Không chọn --</option>
+                                        <option>5mm</option>
+                                        <option>10mm</option>
+                                    </select>
+                                    <button type="button" class="add-option-btn" disabled>+</button>
+                                </div>
+                                <div class="annotation">Chọn giá trị (ví dụ: 5mm) hoặc nhấn '+' để thêm mới.</div>
+                            </div>
+                            <div class="form-group">
+                                <div class="tooltip">
+                                    <label>Bản rộng</label>
+                                    <span class="tooltip-text">Chọn giá trị Bản rộng.</span>
+                                </div>
+                                <div class="input-with-button">
+                                    <select disabled>
+                                        <option>-- Không chọn --</option>
+                                        <option>50mm</option>
+                                        <option>60mm</option>
+                                    </select>
+                                    <button type="button" class="add-option-btn" disabled>+</button>
+                                </div>
+                                <div class="annotation">Chọn giá trị (ví dụ: 50mm) hoặc nhấn '+' để thêm mới.</div>
+                            </div>
+                            <div class="form-group">
+                                <div class="tooltip">
+                                    <label>ID Thông Số</label>
+                                    <span class="tooltip-text">Chọn giá trị ID Thông Số.</span>
+                                </div>
+                                <div class="input-with-button">
+                                    <select disabled>
+                                        <option>-- Không chọn --</option>
+                                        <option>DN20</option>
+                                        <option>DN25</option>
+                                    </select>
+                                    <button type="button" class="add-option-btn" disabled>+</button>
+                                </div>
+                                <div class="annotation">Chọn giá trị (ví dụ: DN20) hoặc nhấn '+' để thêm mới.</div>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-end gap-2">
+                            <button type="button" class="bg-gray-600 text-white px-3 py-1 rounded text-xs">Hủy</button>
+                            <button type="button" class="bg-green-600 text-white px-3 py-1 rounded text-xs">Lưu Biến
+                                Thể</button>
+                        </div>
+                    </div>
+                </div>
+                <h3 class="text-sm font-bold mt-6 mb-2">Hướng Dẫn Sử Dụng</h3>
+                <ol class="list-decimal ml-6 text-sm space-y-2">
+                    <li>Nhấn nút <code>Thêm SP Chi Tiết</code> (màu xanh lá) hoặc biểu tượng <i
+                            class="fas fa-edit"></i>.</li>
+                    <li>Điền các trường:
+                        <ul class="list-disc ml-6">
+                            <li><strong>Sản Phẩm Gốc (*)</strong>: Chọn sản phẩm gốc (VD: Gối đỡ PU Foam & Cùm Ula
+                                3i-Fix loại đế vuông).</li>
+                            <li><strong>Tên Biến Thể (*)</strong>: Tên được tạo tự động (VD: Gối đỡ PU Foam
+                                DN20x5mmx50mm TQ), chỉnh sửa nếu cần.</li>
+                            <li><strong>Hậu Tố SKU</strong>: Nhập hậu tố (VD: TQ cho Trung Quốc).</li>
+                            <li><strong>Giá Gốc</strong>: Nhập giá bán (VD: 100000 VNĐ).</li>
+                            <li><strong>Loại Phân Loại</strong>: Chọn loại (VD: Gối đỡ PU Foam & Cùm Ula 3i-Fix loại đế
+                                vuông, tỷ trọng 130 - 190kg/m3) hoặc để trống.</li>
+                            <li><strong>Thuộc Tính</strong>: Chọn giá trị (VD: Đường kính trong: 20mm) dựa trên Mã Gốc
+                                (PU). Nhấn '+' để thêm giá trị mới.</li>
+                        </ul>
+                    </li>
+                    <li>Xem trước <strong>Mã Biến Thể</strong> (tự động tạo, ví dụ: PU 20mmx5mmx50mm-TQ).</li>
+                    <li>Nhấn <code>Lưu Biến Thể</code> (màu xanh lá).</li>
+                </ol>
+                <div class="note-box">
+                    <p><strong>Chú thích</strong>: Thuộc tính hiển thị dựa trên sản phẩm gốc (Mã Gốc: PU). Mã SKU phải
+                        duy nhất. Sử dụng tooltip để hiểu cách điền.</p>
+                </div>
+            </div>
+
+            <!-- Section: Quản Lý Tồn Kho -->
+            <div class="mb-8">
+                <h2 class="text-base font-bold mb-4">4. Quản Lý Tồn Kho</h2>
+                <p class="text-sm mb-4">Quản lý số lượng tồn kho qua biểu tượng <i class="fas fa-box"></i> trong cột
+                    “Thao Tác”.</p>
+                <h3 class="text-sm font-bold mb-2">Biểu Mẫu Quản Lý Tồn Kho</h3>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Tồn kho: PU 20mmx5mmx50mm-TQ</h2>
+                        <button class="text-gray-500"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="p-4">
+                        <div class="annotation mb-4">Cập nhật số lượng tồn kho và mức tồn kho tối thiểu (ví dụ: Gối đỡ
+                            PU Foam & Cùm Ula 3i-Fix loại đế vuông 20mmx5mm TQ). Nhấn Tab để chuyển giữa các trường.
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <div class="tooltip">
+                                    <label>Số Lượng (Bộ) (*)</label>
+                                    <span class="tooltip-text">Số lượng hiện có của sản phẩm.</span>
+                                </div>
+                                <input type="number" placeholder="Ví dụ: 100" disabled>
+                                <div class="annotation">Nhập số lượng hiện có (ví dụ: 100).</div>
+                            </div>
+                            <div class="form-group">
+                                <div class="tooltip">
+                                    <label>Mức Tồn Kho Tối Thiểu (Bộ)</label>
+                                    <span class="tooltip-text">Mức tối thiểu để cảnh báo khi hết hàng.</span>
+                                </div>
+                                <input type="number" placeholder="Ví dụ: 10" disabled>
+                                <div class="annotation">Nhập mức tối thiểu (ví dụ: 10).</div>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-end gap-2">
+                            <button type="button" class="bg-gray-600 text-white px-3 py-1 rounded text-xs">Hủy</button>
+                            <button type="button" class="bg-green-600 text-white px-3 py-1 rounded text-xs">Lưu Tồn
+                                Kho</button>
+                        </div>
+                    </div>
+                </div>
+                <h3 class="text-sm font-bold mt-6 mb-2">Hướng Dẫn Sử Dụng</h3>
+                <ol class="list-decimal ml-6 text-sm space-y-2">
+                    <li>Nhấn biểu tượng <i class="fas fa-box"></i> trong cột “Thao Tác”.</li>
+                    <li>Điền các trường:
+                        <ul class="list-disc ml-6">
+                            <li><strong>Số Lượng</strong>: Nhập số lượng hiện có (VD: 100).</li>
+                            <li><strong>Mức Tồn Kho Tối Thiểu</strong>: Nhập mức tối thiểu (VD: 10).</li>
+                        </ul>
+                    </li>
+                    <li>Nhấn <code>Lưu Tồn Kho</code> (màu xanh lá).</li>
+                </ol>
+                <div class="note-box">
+                    <p><strong>Chú thích</strong>: Đơn vị (VD: Bộ) được lấy từ sản phẩm gốc. Theo dõi mức tồn kho để
+                        tránh thiếu hàng.</p>
+                </div>
+            </div>
+
+            <!-- Section: Quản Lý Dữ Liệu Chung -->
+            <div class="mb-8">
+                <h2 class="text-base font-bold mb-4">5. Quản Lý Dữ Liệu Chung</h2>
+                <p class="text-sm mb-4">Quản lý Thuộc Tính, Loại Sản Phẩm, Nhóm Sản Phẩm, và Đơn Vị tính qua nút
+                    <code>Quản lý Dữ liệu</code>. Thêm giá trị thuộc tính mới bằng nút '+' trong biểu mẫu sản phẩm chi
+                    tiết.</p>
+                <h3 class="text-sm font-bold mb-2">Biểu Mẫu Quản Lý Thuộc Tính</h3>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Quản lý Dữ liệu Chung</h2>
+                        <button class="text-gray-500"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="p-4">
+                        <div class="annotation mb-4">Chọn tab “Thuộc tính” để thêm hoặc chỉnh sửa giá trị thuộc tính (ví
+                            dụ: Đường kính trong: 20mm).</div>
+                        <div class="flex border-b mb-4">
+                            <span class="px-4 py-2 border-b-2 border-green-600 text-green-600 font-bold">Thuộc
+                                tính</span>
+                            <span class="px-4 py-2">Loại Sản Phẩm</span>
+                            <span class="px-4 py-2">Nhóm Sản Phẩm</span>
+                            <span class="px-4 py-2">Đơn Vị Tính</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <h3 class="text-sm font-bold">Loại thuộc tính</h3>
+                                <ul class="list-none p-0">
+                                    <li class="p-2 rounded bg-green-600 text-white">Đường kính trong</li>
+                                    <li class="p-2 rounded hover:bg-gray-100">Độ dày</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold">Các tùy chọn cho: Đường kính trong</h3>
+                                <ul class="list-none p-0">
+                                    <li class="flex p-2">
+                                        <input type="text" class="flex-1 p-2 border border-gray-300 rounded text-xs"
+                                            value="20mm" disabled>
+                                        <div class="flex gap-2 ml-2">
+                                            <button class="text-blue-600" disabled><i class="fas fa-save"></i></button>
+                                            <button class="text-red-600" disabled><i class="fas fa-trash"></i></button>
+                                        </div>
+                                    </li>
+                                    <li class="flex p-2">
+                                        <input type="text" class="flex-1 p-2 border border-gray-300 rounded text-xs"
+                                            value="30mm" disabled>
+                                        <div class="flex gap-2 ml-2">
+                                            <button class="text-blue-600" disabled><i class="fas fa-save"></i></button>
+                                            <button class="text-red-600" disabled><i class="fas fa-trash"></i></button>
+                                        </div>
+                                    </li>
+                                </ul>
+                                <div class="flex gap-2 mt-4 pt-4 border-t">
+                                    <input type="text" class="flex-1 p-2 border border-gray-300 rounded text-xs"
+                                        placeholder="Nhập giá trị mới, ví dụ: 40mm" disabled>
+                                    <button type="button"
+                                        class="bg-blue-600 text-white px-3 py-1 rounded text-xs">Thêm</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <h3 class="text-sm font-bold mt-6 mb-2">Hướng Dẫn Sử Dụng</h3>
+                <ol class="list-decimal ml-6 text-sm space-y-2">
+                    <li>Nhấn nút <code>Quản lý Dữ liệu</code> (màu xanh lam).</li>
+                    <li>Chọn tab:
+                        <ul class="list-disc ml-6">
+                            <li><strong>Thuộc tính</strong>: Nhấn loại thuộc tính (VD: Đường kính trong), nhập giá trị
+                                mới (VD: 40mm), nhấn <code>Thêm</code>. Sửa/xóa bằng biểu tượng <i
+                                    class="fas fa-save"></i>/<i class="fas fa-trash"></i>.</li>
+                            <li><strong>Loại Sản Phẩm</strong>: Nhập tên loại (VD: Gối đỡ PU Foam & Cùm Ula 3i-Fix loại
+                                đế vuông, tỷ trọng 130 - 190kg/m3), nhấn <code>Thêm</code>.</li>
+                            <li><strong>Nhóm Sản Phẩm</strong>: Nhập tên nhóm (VD: Vật tư thành phẩm bán thành phẩm),
+                                nhấn <code>Thêm</code>.</li>
+                            <li><strong>Đơn Vị Tính</strong>: Nhập đơn vị (VD: Bộ), nhấn <code>Thêm</code>.</li>
+                        </ul>
+                    </li>
+                    <li>Nhấn <code>Thêm</code> hoặc biểu tượng lưu/xóa để cập nhật.</li>
+                    <li>Trong biểu mẫu sản phẩm chi tiết, nhấn '+' để thêm giá trị thuộc tính mới.</li>
+                </ol>
+                <div class="note-box">
+                    <p><strong>Chú thích</strong>: Cập nhật Nhóm, Loại, và Đơn Vị trước khi thêm sản phẩm. Giá trị thuộc
+                        tính (VD: 20mm) hiển thị trong biểu mẫu sản phẩm chi tiết.</p>
+                </div>
+            </div>
+
+            <!-- Section: Lọc và Xóa Sản Phẩm -->
+            <div class="mb-8">
+                <h2 class="text-base font-bold mb-4">6. Lọc và Xóa Sản Phẩm</h2>
+                <p class="text-sm mb-4">Sử dụng bộ lọc để tìm sản phẩm hoặc xóa sản phẩm không cần thiết.</p>
+                <h3 class="text-sm font-bold mb-2">Bộ Lọc và Xóa</h3>
+                <div class="modal-content">
+                    <div class="p-4">
+                        <div class="annotation mb-4">Sử dụng bộ lọc để tìm sản phẩm hoặc chọn sản phẩm để xóa. Nhấn Tab
+                            để chuyển giữa các trường.</div>
+                        <div class="flex flex-wrap gap-4">
+                            <div class="form-group w-48">
+                                <label>Nhóm SP</label>
+                                <select disabled>
+                                    <option>-- Chọn nhóm --</option>
+                                    <option>Vật tư thành phẩm bán thành phẩm</option>
+                                </select>
+                                <div class="annotation">Chọn nhóm (VD: Vật tư thành phẩm bán thành phẩm).</div>
+                            </div>
+                            <div class="form-group w-48">
+                                <label>Loại Phân Loại</label>
+                                <select disabled>
+                                    <option>-- Chọn loại --</option>
+                                    <option>Gối đỡ PU Foam & Cùm Ula 3i-Fix loại đế vuông, tỷ trọng 130 - 190kg/m3
+                                    </option>
+                                    <option>Ula</option>
+                                </select>
+                                <div class="annotation">Chọn loại (VD: Gối đỡ PU Foam & Cùm Ula 3i-Fix loại đế vuông, tỷ
+                                    trọng 130 - 190kg/m3).</div>
+                            </div>
+                            <div class="form-group w-48">
+                                <label>Tìm kiếm</label>
+                                <input type="text" placeholder="Mã, tên sản phẩm..." disabled>
+                                <div class="annotation">Nhập mã hoặc tên (VD: PU, Gối đỡ PU Foam).</div>
+                            </div>
+                            <div class="form-group w-48">
+                                <label>&nbsp;</label>
+                                <button class="bg-gray-600 text-white px-3 py-1 rounded text-xs w-full"><i
+                                        class="fas fa-times mr-2"></i>Xóa Lọc</button>
+                                <div class="annotation">Nhấn để bỏ bộ lọc.</div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-sm"><strong>Xóa sản phẩm</strong>: Chọn sản phẩm bằng ô kiểm hoặc nhấn <i
+                                    class="fas fa-trash"></i> trong cột “Thao Tác”.</p>
+                            <div class="annotation">Nhấn <code>Xóa đã chọn</code> để xóa nhiều sản phẩm hoặc xác nhận
+                                khi xóa từng sản phẩm.</div>
+                        </div>
+                    </div>
+                </div>
+                <h3 class="text-sm font-bold mt-6 mb-2">Hướng Dẫn Sử Dụng</h3>
+                <ol class="list-decimal ml-6 text-sm space-y-2">
+                    <li><strong>Lọc sản phẩm</strong>:
+                        <ul class="list-disc ml-6">
+                            <li>Chọn <strong>Nhóm SP</strong> (VD: Vật tư thành phẩm bán thành phẩm).</li>
+                            <li>Chọn <strong>Loại Phân Loại</strong> (VD: Gối đỡ PU Foam & Cùm Ula 3i-Fix loại đế vuông,
+                                tỷ trọng 130 - 190kg/m3).</li>
+                            <li>Nhập mã hoặc tên vào ô <strong>Tìm kiếm</strong> (VD: PU, Gối đỡ PU Foam).</li>
+                            <li>Nhấn <code>Xóa Lọc</code> để bỏ bộ lọc.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Xóa sản phẩm</strong>:
+                        <ul class="list-disc ml-6">
+                            <li>Chọn sản phẩm bằng ô kiểm, nhấn <code>Xóa đã chọn</code> (màu đỏ) và xác nhận.</li>
+                            <li>Hoặc nhấn <i class="fas fa-trash"></i> trong cột “Thao Tác” và xác nhận.</li>
+                        </ul>
+                    </li>
+                </ol>
+                <div class="note-box">
+                    <p><strong>Chú thích</strong>: Bộ lọc giúp tìm sản phẩm nhanh. Cẩn thận khi xóa, vì không thể hoàn
+                        tác.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
+```

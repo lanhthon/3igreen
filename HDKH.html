@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Khách Hàng</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@7/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Mock data thay cho API
+        const mockCompanies = [
+            {
+                CongTyID: 1, TenCongTy: "Công ty A", DiaChi: "123 Đường Láng, Hà Nội", MaSoThue: "123456789", SoDienThoaiChinh: "0123456789", CoCheGiaID: 1, TenCoChe: "Giá ưu đãi", PhanTramDieuChinh: 5.00,
+                _children: [
+                    { NguoiLienHeID: 1, CongTyID: 1, HoTen: "Nguyễn Văn A", ChucVu: "Giám đốc", Email: "nva@example.com", SoDiDong: "0987654321" },
+                    { NguoiLienHeID: 2, CongTyID: 1, HoTen: "Trần Thị B", ChucVu: "Kế toán", Email: "ttb@example.com", SoDiDong: "0981234567" }
+                ]
+            },
+            {
+                CongTyID: 2, TenCongTy: "Công ty B", DiaChi: "456 Lê Lợi, TP.HCM", MaSoThue: "987654321", SoDienThoaiChinh: "0987654321", CoCheGiaID: 2, TenCoChe: "Giá tiêu chuẩn", PhanTramDieuChinh: -2.00,
+                _children: []
+            }
+        ];
+
+        const mockPriceMechs = [
+            { CoCheGiaID: 1, MaCoChe: "VIP01", TenCoChe: "Giá ưu đãi", PhanTramDieuChinh: 5.00 },
+            { CoCheGiaID: 2, MaCoChe: "STD01", TenCoChe: "Giá tiêu chuẩn", PhanTramDieuChinh: -2.00 }
+        ];
+
+        function App() {
+            const [companies, setCompanies] = useState(mockCompanies);
+            const [priceMechs, setPriceMechs] = useState(mockPriceMechs);
+            const [filterField, setFilterField] = useState("");
+            const [filterValue, setFilterValue] = useState("");
+            const [modal, setModal] = useState(null);
+            const [toast, setToast] = useState({ message: "", type: "", show: false });
+
+            // Hiển thị thông báo
+            const showToast = (message, type) => {
+                setToast({ message, type, show: true });
+                setTimeout(() => setToast({ message: "", type: "", show: false }), 3000);
+            };
+
+            // Lọc dữ liệu
+            const filteredCompanies = companies.filter(company => {
+                if (!filterValue) return true;
+                const lowerCaseValue = filterValue.toLowerCase();
+                const fields = filterField ? [filterField] : ["TenCongTy", "HoTen", "Email", "DiaChi", "MaSoThue"];
+                let match = false;
+                for (const f of fields) {
+                    if (company[f]?.toLowerCase().includes(lowerCaseValue)) match = true;
+                    if (company._children) {
+                        for (const contact of company._children) {
+                            if (contact[f]?.toLowerCase().includes(lowerCaseValue)) match = true;
+                        }
+                    }
+                }
+                return match;
+            });
+
+            // Modal Component
+            const Modal = ({ title, children, onClose }) => (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl">
+                        <div className="flex justify-between items-center border-b pb-4 mb-4">
+                            <h2 className="text-xl font-bold">{title}</h2>
+                            <span className="text-2xl cursor-pointer text-gray-600" onClick={onClose}>&times;</span>
+                        </div>
+                        {children}
+                    </div>
+                </div>
+            );
+
+            // Form thêm/sửa công ty
+            const CompanyForm = ({ company = {}, onClose }) => {
+                const isEdit = !!company.CongTyID;
+                const [formData, setFormData] = useState({
+                    CongTyID: company.CongTyID || "",
+                    TenCongTy: company.TenCongTy || "",
+                    DiaChi: company.DiaChi || "",
+                    MaSoThue: company.MaSoThue || "",
+                    SoDienThoaiChinh: company.SoDienThoaiChinh || "",
+                    CoCheGiaID: company.CoCheGiaID || ""
+                });
+
+                const handleSubmit = (e) => {
+                    e.preventDefault();
+                    if (!formData.TenCongTy) {
+                        showToast("Tên công ty là bắt buộc!", "error");
+                        return;
+                    }
+                    if (isEdit) {
+                        setCompanies(companies.map(c => c.CongTyID === formData.CongTyID ? { ...c, ...formData } : c));
+                        showToast("Cập nhật công ty thành công!", "success");
+                    } else {
+                        setCompanies([...companies, { ...formData, CongTyID: Date.now(), _children: [] }]);
+                        showToast("Thêm công ty thành công!", "success");
+                    }
+                    onClose();
+                };
+
+                return (
+                    <Modal title={isEdit ? `Sửa: ${company.TenCongTy}` : "Thêm Công Ty Mới"} onClose={onClose}>
+                        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+                            <div className="flex flex-col">
+                                <label className="font-medium mb-2">Tên Công Ty (*)</label>
+                                <input className="border rounded p-2" value={formData.TenCongTy} onChange={e => setFormData({ ...formData, TenCongTy: e.target.value })} required />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="font-medium mb-2">Địa Chỉ</label>
+                                <input className="border rounded p-2" value={formData.DiaChi} onChange={e => setFormData({ ...formData, DiaChi: e.target.value })} />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="font-medium mb-2">Mã Số Thuế</label>
+                                <input className="border rounded p-2" value={formData.MaSoThue} onChange={e => setFormData({ ...formData, MaSoThue: e.target.value })} />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="font-medium mb-2">Số Điện Thoại</label>
+                                <input className="border rounded p-2" value={formData.SoDienThoaiChinh} onChange={e => setFormData({ ...formData, SoDienThoaiChinh: e.target.value })} />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="font-medium mb-2">Cơ Chế Giá</label>
+                                <select className="border rounded p-2" value={formData.CoCheGiaID} onChange={e => setFormData({ ...formData, CoCheGiaID: e.target.value })}>
+                                    <option value="">-- Chọn --</option>
+                                    {priceMechs.map(opt => (
+                                        <option key={opt.CoCheGiaID} value={opt.CoCheGiaID}>{opt.TenCoChe}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="col-span-2 border-t pt-4 text-right">
+                                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">Lưu</button>
+                            </div>
+                        </form>
+                    </Modal>
+                );
+            };
+
+            // Form thêm/sửa người liên hệ
+            const ContactForm = ({ contact = {}, companyId, onClose }) => {
+                const isEdit = !!contact.NguoiLienHeID;
+                const [formData, setFormData] = useState({
+                    NguoiLienHeID: contact.NguoiLienHeID || "",
+                    CongTyID: contact.CongTyID || companyId,
+                    HoTen: contact.HoTen || "",
+                    ChucVu: contact.ChucVu || "",
+                    Email: contact.Email || "",
+                    SoDiDong: contact.SoDiDong || ""
+                });
+
+                const handleSubmit = (e) => {
+                    e.preventDefault();
+                    if (!formData.HoTen) {
+                        showToast("Họ tên là bắt buộc!", "error");
+                        return;
+                    }
+                    setCompanies(companies.map(c => {
+                        if (c.CongTyID === formData.CongTyID) {
+                            if (isEdit) {
+                                c._children = c._children.map(con => con.NguoiLienHeID === formData.NguoiLienHeID ? formData : con);
+                            } else {
+                                c._children.push({ ...formData, NguoiLienHeID: Date.now() });
+                            }
+                        }
+                        return c;
+                    }));
+                    showToast(isEdit ? "Cập nhật người liên hệ thành công!" : "Thêm người liên hệ thành công!", "success");
+                    onClose();
+                };
+
+                return (
+                    <Modal title={isEdit ? `Sửa: ${contact.HoTen}` : "Thêm Người Liên Hệ Mới"} onClose={onClose}>
+                        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+                            <div className="flex flex-col">
+                                <label className="font-medium mb-2">Họ Tên (*)</label>
+                                <input className="border rounded p-2" value={formData.HoTen} onChange={e => setFormData({ ...formData, HoTen: e.target.value })} required />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="font-medium mb-2">Chức Vụ</label>
+                                <input className="border rounded p-2" value={formData.ChucVu} onChange={e => setFormData({ ...formData, ChucVu: e.target.value })} />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="font-medium mb-2">Email</label>
+                                <input className="border rounded p-2" type="email" value={formData.Email} onChange={e => setFormData({ ...formData, Email: e.target.value })} />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="font-medium mb-2">Số Di Động</label>
+                                <input className="border rounded p-2" value={formData.SoDiDong} onChange={e => setFormData({ ...formData, SoDiDong: e.target.value })} />
+                            </div>
+                            <div className="col-span-2 border-t pt-4 text-right">
+                                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">Lưu</button>
+                            </div>
+                        </form>
+                    </Modal>
+                );
+            };
+
+            // Form quản lý cơ chế giá
+            const PriceMechForm = ({ onClose }) => {
+                const [newPriceMech, setNewPriceMech] = useState({ MaCoChe: "", TenCoChe: "", PhanTramDieuChinh: "" });
+
+                const handleAdd = (e) => {
+                    e.preventDefault();
+                    if (!newPriceMech.MaCoChe || !newPriceMech.TenCoChe || !newPriceMech.PhanTramDieuChinh) {
+                        showToast("Vui lòng điền đầy đủ thông tin!", "error");
+                        return;
+                    }
+                    setPriceMechs([...priceMechs, { ...newPriceMech, CoCheGiaID: Date.now() }]);
+                    setNewPriceMech({ MaCoChe: "", TenCoChe: "", PhanTramDieuChinh: "" });
+                    showToast("Thêm cơ chế giá thành công!", "success");
+                };
+
+                const handleEdit = (id, updated) => {
+                    setPriceMechs(priceMechs.map(p => p.CoCheGiaID === id ? { ...p, ...updated } : p));
+                    showToast("Cập nhật cơ chế giá thành công!", "success");
+                };
+
+                const handleDelete = (id) => {
+                    if (window.confirm("Bạn có chắc muốn xóa cơ chế giá này?")) {
+                        setPriceMechs(priceMechs.filter(p => p.CoCheGiaID !== id));
+                        showToast("Xóa cơ chế giá thành công!", "success");
+                    }
+                };
+
+                return (
+                    <Modal title="Quản Lý Cơ Chế Giá" onClose={onClose}>
+                        <div className="flex flex-col gap-4">
+                            <form onSubmit={handleAdd} className="flex gap-4 items-end">
+                                <div className="flex-1">
+                                    <label className="font-medium mb-2 block">Mã Cơ Chế</label>
+                                    <input className="border rounded p-2 w-full" value={newPriceMech.MaCoChe} onChange={e => setNewPriceMech({ ...newPriceMech, MaCoChe: e.target.value })} required />
+                                </div>
+                                <div className="flex-1">
+                                    <label className="font-medium mb-2 block">Tên Cơ Chế</label>
+                                    <input className="border rounded p-2 w-full" value={newPriceMech.TenCoChe} onChange={e => setNewPriceMech({ ...newPriceMech, TenCoChe: e.target.value })} required />
+                                </div>
+                                <div className="flex-1">
+                                    <label className="font-medium mb-2 block">% Điều Chỉnh</label>
+                                    <input className="border rounded p-2 w-full" type="number" step="0.01" value={newPriceMech.PhanTramDieuChinh} onChange={e => setNewPriceMech({ ...newPriceMech, PhanTramDieuChinh: e.target.value })} required />
+                                </div>
+                                <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded"><i className="fa fa-plus"></i> Thêm</button>
+                            </form>
+                            <ul className="max-h-96 overflow-y-auto">
+                                {priceMechs.map(pm => (
+                                    <li key={pm.CoCheGiaID} className="flex justify-between items-center p-2 rounded even:bg-gray-100 hover:bg-gray-200">
+                                        <div className="flex gap-4">
+                                            <span><b>Mã:</b> {pm.MaCoChe}</span>
+                                            <span><b>Tên:</b> {pm.TenCoChe}</span>
+                                            <span><b>Điều chỉnh:</b> <span className={pm.PhanTramDieuChinh < 0 ? "text-red-500" : "text-green-500"}>{pm.PhanTramDieuChinh}%</span></span>
+                                        </div>
+                                        <div>
+                                            <button className="text-blue-500 p-2" onClick={() => {
+                                                const updated = prompt("Nhập thông tin mới (Mã,Tên,%)", `${pm.MaCoChe},${pm.TenCoChe},${pm.PhanTramDieuChinh}`);
+                                                if (updated) {
+                                                    const [MaCoChe, TenCoChe, PhanTramDieuChinh] = updated.split(",");
+                                                    handleEdit(pm.CoCheGiaID, { MaCoChe, TenCoChe, PhanTramDieuChinh });
+                                                }
+                                            }}><i className="fa fa-pencil"></i></button>
+                                            <button className="text-red-500 p-2" onClick={() => handleDelete(pm.CoCheGiaID)}><i className="fa fa-trash"></i></button>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </Modal>
+                );
+            };
+
+            // Main App render
+            return (
+                <div className="max-w-[98%] mx-auto p-5 bg-gray-100 font-sans">
+                    <h1 className="text-2xl font-bold mb-5"><i className="fa fa-users mr-2"></i> Trang Quản Lý Khách Hàng</h1>
+                    <div className="bg-white p-4 rounded-lg shadow-sm mb-5 flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <label className="font-bold">Lọc theo:</label>
+                            <select className="border rounded p-2" value={filterField} onChange={e => setFilterField(e.target.value)}>
+                                <option value="">-- Tất cả các trường --</option>
+                                <option value="TenCongTy">Tên Công Ty</option>
+                                <option value="HoTen">Người Liên Hệ</option>
+                                <option value="Email">Email</option>
+                                <option value="DiaChi">Địa Chỉ</option>
+                                <option value="MaSoThue">Mã Số Thuế</option>
+                            </select>
+                            <input className="border rounded p-2 w-80" placeholder="Nhập giá trị tìm kiếm..." value={filterValue} onChange={e => setFilterValue(e.target.value)} />
+                            <button className="bg-gray-600 text-white px-4 py-2 rounded" onClick={() => { setFilterField(""); setFilterValue(""); }}><i className="fa fa-times mr-2"></i>Xóa Lọc</button>
+                        </div>
+                        <div className="flex gap-3">
+                            <button className="bg-teal-500 text-white px-4 py-2 rounded" onClick={() => setModal({ type: "priceMech" })}><i className="fa fa-dollar-sign mr-2"></i>Quản lý Cơ chế giá</button>
+                            <button className="bg-green-500 text-white px-4 py-2 rounded" onClick={() => setModal({ type: "addCompany" })}><i className="fa fa-plus mr-2"></i>Thêm Công Ty</button>
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-lg shadow-sm overflow-auto max-h-[75vh]">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="bg-gray-200">
+                                    <th className="p-3 text-left sticky left-0 bg-gray-200">Tên Công Ty</th>
+                                    <th className="p-3 text-left">Người Liên Hệ</th>
+                                    <th className="p-3 text-left">Email</th>
+                                    <th className="p-3 text-left">Cơ Chế Giá</th>
+                                    <th className="p-3 text-left">Địa Chỉ</th>
+                                    <th className="p-3 text-center">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredCompanies.map(company => (
+                                    <React.Fragment key={company.CongTyID}>
+                                        <tr className="border-t">
+                                            <td className="p-3 font-bold text-blue-600 sticky left-0 bg-white">{company.TenCongTy}</td>
+                                            <td className="p-3"></td>
+                                            <td className="p-3"></td>
+                                            <td className="p-3">
+                                                {company.TenCoChe ? (
+                                                    <span>{company.TenCoChe} <span className={company.PhanTramDieuChinh < 0 ? "text-red-500" : "text-green-500"}>({company.PhanTramDieuChinh}%)</span></span>
+                                                ) : (
+                                                    <span className="text-gray-400">--Chưa chọn--</span>
+                                                )}
+                                            </td>
+                                            <td className="p-3">{company.DiaChi}</td>
+                                            <td className="p-3 text-center">
+                                                <button className="text-green-500 mx-2" onClick={() => setModal({ type: "addContact", companyId: company.CongTyID })} title="Thêm người liên hệ"><i className="fa fa-user-plus"></i></button>
+                                                <button className="text-blue-500 mx-2" onClick={() => setModal({ type: "editCompany", company })} title="Sửa"><i className="fa fa-pencil"></i></button>
+                                                <button className="text-red-500 mx-2" onClick={() => {
+                                                    if (window.confirm(`Bạn có chắc muốn xóa công ty "${company.TenCongTy}"?`)) {
+                                                        setCompanies(companies.filter(c => c.CongTyID !== company.CongTyID));
+                                                        showToast("Xóa công ty thành công!", "success");
+                                                    }
+                                                }} title="Xóa"><i className="fa fa-trash-can"></i></button>
+                                            </td>
+                                        </tr>
+                                        {company._children.map(contact => (
+                                            <tr key={contact.NguoiLienHeID} className="bg-gray-50">
+                                                <td className="p-3 sticky left-0 bg-gray-50"></td>
+                                                <td className="p-3">{contact.HoTen}</td>
+                                                <td className="p-3">{contact.Email}</td>
+                                                <td className="p-3"></td>
+                                                <td className="p-3"></td>
+                                                <td className="p-3 text-center">
+                                                    <button className="text-blue-500 mx-2" onClick={() => setModal({ type: "editContact", contact })} title="Sửa"><i className="fa fa-pencil"></i></button>
+                                                    <button className="text-red-500 mx-2" onClick={() => {
+                                                        if (window.confirm(`Bạn có chắc muốn xóa người liên hệ "${contact.HoTen}"?`)) {
+                                                            setCompanies(companies.map(c => {
+                                                                if (c.CongTyID === contact.CongTyID) {
+                                                                    c._children = c._children.filter(con => con.NguoiLienHeID !== contact.NguoiLienHeID);
+                                                                }
+                                                                return c;
+                                                            }));
+                                                            showToast("Xóa người liên hệ thành công!", "success");
+                                                        }
+                                                    }} title="Xóa"><i className="fa fa-trash-can"></i></button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </React.Fragment>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    {toast.show && (
+                        <div className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded text-white ${toast.type === "success" ? "bg-green-500" : "bg-red-500"} transition-opacity duration-500 opacity-100`}>
+                            {toast.message}
+                        </div>
+                    )}
+                    {modal?.type === "addCompany" && <CompanyForm onClose={() => setModal(null)} />}
+                    {modal?.type === "editCompany" && <CompanyForm company={modal.company} onClose={() => setModal(null)} />}
+                    {modal?.type === "addContact" && <ContactForm companyId={modal.companyId} onClose={() => setModal(null)} />}
+                    {modal?.type === "editContact" && <ContactForm contact={modal.contact} onClose={() => setModal(null)} />}
+                    {modal?.type === "priceMech" && <PriceMechForm onClose={() => setModal(null)} />}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById("root"));
+    </script>
+</body>
+
+</html>

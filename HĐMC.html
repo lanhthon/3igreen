@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cách Tính Định Mức Cắt Cây Bán Thành Phẩm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+</head>
+
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto p-6">
+        <h1 class="text-3xl font-bold text-center text-blue-600 mb-8">Cách Tính Định Mức Cắt Cây Bán Thành Phẩm</h1>
+        <div class="bg-white shadow-md rounded-lg p-6 max-w-4xl mx-auto">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">1. Mục đích</h2>
+            <p class="text-gray-700 mb-4">Định mức cắt cây bán thành phẩm (<code>SoCayPhaiCat</code>) là số lượng cây PU
+                Foam cần sử dụng để sản xuất đủ số lượng sản phẩm yêu cầu trong đơn hàng, dựa trên định mức cắt và các
+                điều kiện cụ thể của sản phẩm (như loại sản phẩm và thuộc tính kỹ thuật).</p>
+
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 mt-6">2. Công thức tính</h2>
+            <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                <p class="text-gray-700">Công thức cơ bản:</p>
+                <pre
+                    class="bg-gray-800 text-white p-4 rounded-lg my-2">SoCayPhaiCat = ceil(SoLuongCanSX / DinhMucCatValue)</pre>
+                <p class="text-gray-700">Với sản phẩm loại <code>PUR-C</code> (cùm PU Foam):</p>
+                <pre
+                    class="bg-gray-800 text-white p-4 rounded-lg my-2">SoCayPhaiCat = ceil((SoLuongCanSX / DinhMucCatValue) / 2)</pre>
+                <p class="text-gray-700">Trong đó:</p>
+                <ul class="list-disc list-inside text-gray-700 space-y-2">
+                    <li><strong>SoLuongCanSX</strong>: Số lượng sản phẩm cần sản xuất thêm, tính bằng:
+                        <code>SoLuongCanSX = SoLuong - SoLuongLayTuKho</code>.
+                    </li>
+                    <li><strong>SoLuong</strong>: Số lượng sản phẩm yêu cầu trong đơn hàng.</li>
+                    <li><strong>SoLuongLayTuKho</strong>: Số lượng sản phẩm lấy từ tồn kho khả dụng, tính bằng:
+                        <code>SoLuongLayTuKho = min(SoLuong, TonKhoKhaDung)</code>.
+                    </li>
+                    <li><strong>TonKhoKhaDung</strong>: Tồn kho khả dụng, tính bằng:
+                        <code>TonKhoKhaDung = max(0, TonKhoVatLy - DaGanChoDonKhac)</code>.
+                    </li>
+                    <li><strong>DinhMucCatValue</strong>: Số bộ sản phẩm có thể cắt từ một cây PU Foam.</li>
+                    <li><strong>ceil</strong>: Hàm làm tròn lên để đảm bảo đủ nguyên liệu.</li>
+                </ul>
+            </div>
+
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 mt-6">3. Nguồn dữ liệu</h2>
+            <p class="text-gray-700 mb-4">Dữ liệu được lấy từ các trang quản lý trong hệ thống thông qua mã trong
+                <code>get_donhang_details.php</code>:
+            </p>
+            <table class="w-full border-collapse text-sm text-gray-700 mb-4">
+                <thead class="bg-blue-100">
+                    <tr>
+                        <th class="border p-2">Trang Quản Lý</th>
+                        <th class="border p-2">Dữ liệu</th>
+                        <th class="border p-2">Mô tả</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="border p-2">Chi Tiết Đơn Hàng</td>
+                        <td class="border p-2"><code>SoLuong, SanPhamID, MaHang, TenSanPham, ID_ThongSo</code></td>
+                        <td class="border p-2">Thông tin chi tiết đơn hàng: số lượng yêu cầu, ID sản phẩm, mã hàng.</td>
+                    </tr>
+                    <tr>
+                        <td class="border p-2">Danh Mục Sản Phẩm</td>
+                        <td class="border p-2"><code>variant_sku, sku_suffix, product_id</code></td>
+                        <td class="border p-2">Mã SKU, hậu tố SKU, liên kết với thông tin sản phẩm.</td>
+                    </tr>
+                    <tr>
+                        <td class="border p-2">Thông Tin Sản Phẩm</td>
+                        <td class="border p-2"><code>HinhDang</code></td>
+                        <td class="border p-2">Hình dạng sản phẩm (vuông,tròn) để tìm định mức cắt.</td>
+                    </tr>
+                    <tr>
+                        <td class="border p-2">Quản Lý Tồn Kho</td>
+                        <td class="border p-2"><code>quantity</code></td>
+                        <td class="border p-2">Tồn kho vật lý (<code>TonKhoVatLy</code>).</td>
+                    </tr>
+                    <tr>
+                        <td class="border p-2">Phân Bổ Tồn Kho</td>
+                        <td class="border p-2"><code>SoLuongPhanBo</code></td>
+                        <td class="border p-2">Số lượng đã phân bổ cho các đơn hàng khác (<code>DaGanChoDonKhac</code>).
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="border p-2">Trang Quản Lý Định Mức Cắt</td>
+                        <td class="border p-2"><code>SoBoTrenCay</code></td>
+                        <td class="border p-2">Định mức cắt (số bộ sản phẩm trên một cây).</td>
+                    </tr>
+                    <tr>
+                        <td class="border p-2">Thuộc Tính Sản Phẩm</td>
+                        <td class="border p-2"><code>DoDayItem, BanRongItem, DuongKinhTrongItem</code></td>
+                        <td class="border p-2">Thuộc tính sản phẩm: độ dày, bản rộng, đường kính trong.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 mt-6">4. Quy trình tính toán</h2>
+            <ol class="list-decimal list-inside space-y-4 text-gray-700">
+                <li>Lấy thông tin chi tiết đơn hàng từ <strong>Chi Tiết Đơn Hàng</strong>, kết hợp với <strong>Danh Mục
+                        Sản Phẩm</strong>, <strong>Thông Tin Sản Phẩm</strong>, và <strong>Thuộc Tính Sản Phẩm</strong>
+                    để lấy <code>SoLuong</code>, <code>HinhDang</code>, <code>TonKhoVatLy</code>, v.v.</li>
+                <li>Tính số lượng đã phân bổ cho các đơn hàng khác (<code>DaGanChoDonKhac</code>) từ <strong>Phân Bổ Tồn
+                        Kho</strong>.</li>
+                <li>Tính tồn kho khả dụng: <code>TonKhoKhaDung = max(0, TonKhoVatLy - DaGanChoDonKhac)</code>.</li>
+                <li>Tính số lượng lấy từ kho: <code>SoLuongLayTuKho = min(SoLuong, TonKhoKhaDung)</code>.</li>
+                <li>Tính số lượng cần sản xuất: <code>SoLuongCanSX = SoLuong - SoLuongLayTuKho</code>.</li>
+                <li>Lấy định mức cắt (<code>DinhMucCatValue</code>) từ <strong>Trang Quản Lý Định Mức Cắt</strong> dựa
+                    trên <code>HinhDang</code>, <code>DuongKinhTrongItem</code>, và <code>BanRongItem</code>.</li>
+                <li>Tìm bán thành phẩm (BTP) phù hợp từ <strong>Danh Mục Sản Phẩm</strong> với mã SKU <code>CV%</code>
+                    hoặc <code>CT%</code>, khớp các thuộc tính.</li>
+                <li>Tính định mức cắt cây bán thành phẩm:
+                    <ul class="list-disc list-inside ml-4">
+                        <li>Cho <code>PUR-S</code>: <code>ceil(SoLuongCanSX / DinhMucCatValue)</code>.</li>
+                        <li>Cho <code>PUR-C</code>: <code>ceil((SoLuongCanSX / DinhMucCatValue) / 2)</code>.</li>
+                    </ul>
+                </li>
+            </ol>
+
+
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 mt-6">5. Ví dụ minh họa</h2>
+            <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                <p class="text-gray-700 mb-2">Giả sử:</p>
+                <ul class="list-disc list-inside text-gray-700 mb-2">
+                    <li><code>SoLuong = 100</code> (yêu cầu 100 bộ).</li>
+                    <li><code>TonKhoVatLy = 50</code>, <code>DaGanChoDonKhac = 20</code> →
+                        <code>TonKhoKhaDung = max(0, 50 - 20) = 30</code>.
+                    </li>
+                    <li><code>SoLuongLayTuKho = min(100, 30) = 30</code>.</li>
+                    <li><code>SoLuongCanSX = 100 - 30 = 70</code>.</li>
+                    <li><code>DinhMucCatValue = 10</code> (10 bộ/cây).</li>
+                    <li>Sản phẩm thuộc loại <code>PUR-C</code>.</li>
+                </ul>
+                <p class="text-gray-700">Tính toán: <code>SoCayPhaiCat = ceil((70 / 10) / 2) = ceil(3.5) = 4</code>.</p>
+                <p class="text-gray-700 font-bold">Kết quả: Cần 4 cây PU Foam để sản xuất.</p>
+            </div>
+
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 mt-6">6. Lưu ý</h2>
+            <ul class="list-disc list-inside text-gray-700 space-y-2">
+                <li><strong>Định mức cắt</strong>: Phải được cấu hình chính xác trong <strong>Trang Quản Lý Định Mức
+                        Cắt</strong>.</li>
+                <li><strong>Tồn kho khả dụng</strong>: Cập nhật động để tránh phân bổ trùng.</li>
+                <li><strong>Loại sản phẩm</strong>: Phân biệt <code>PUR-S</code> và <code>PUR-C</code> dựa trên
+                    <code>ProductBaseSKU</code>.
+                </li>
+                <li><strong>Bán thành phẩm</strong>: Chỉ tìm BTP nếu cần sản xuất thêm và sản phẩm thuộc
+                    <code>PUR-S</code> hoặc <code>PUR-C</code>.
+                </li>
+            </ul>
+
+            <div class="mt-6 text-center">
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Đăng ký plugin annotation
+        Chart.register(Chart.registerables, annotation);
+
+        // Xử lý nút tải PDF
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            alert('Chức năng tải PDF đang được phát triển. Vui lòng sao chép nội dung hoặc in trang này.');
+        });
+
+        // Vẽ biểu đồ minh họa quy trình bằng Chart.js
+        const ctx = document.getElementById('flowchart').getContext('2d');
+        new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Quy trình tính định mức cắt cây bán thành phẩm',
+                    data: [
+                        { x: 0, y: 5, label: 'SoLuong = 100' },
+                        { x: 1, y: 4, label: 'TonKhoVatLy = 50' },
+                        { x: 1, y: 3, label: 'DaGanChoDonKhac = 20' },
+                        { x: 2, y: 3, label: 'TonKhoKhaDung = 30' },
+                        { x: 3, y: 2, label: 'SoLuongLayTuKho = 30' },
+                        { x: 4, y: 2, label: 'SoLuongCanSX = 70' },
+                        { x: 5, y: 1, label: 'DinhMucCatValue = 10' },
+                        { x: 6, y: 0, label: 'SoCayPhaiCat = ceil((70/10)/2) = 4' }
+                    ],
+                    borderColor: '#3b82f6',
+                    backgroundColor: '#ffffff',
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#3b82f6',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    showLine: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { display: true },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.raw.label;
+                            }
+                        }
+                    },
+                    annotation: {
+                        annotations: [
+                            {
+                                type: 'label',
+                                xValue: 0,
+                                yValue: 5,
+                                content: ['SoLuong = 100'],
+                                backgroundColor: '#ffffff',
+                                borderColor: '#3b82f6',
+                                borderWidth: 1,
+                                padding: 6,
+                                font: { size: 12 }
+                            },
+                            {
+                                type: 'label',
+                                xValue: 1,
+                                yValue: 4,
+                                content: ['TonKhoVatLy = 50'],
+                                backgroundColor: '#ffffff',
+                                borderColor: '#3b82f6',
+                                borderWidth: 1,
+                                padding: 6,
+                                font: { size: 12 }
+                            },
+                            {
+                                type: 'label',
+                                xValue: 1,
+                                yValue: 3,
+                                content: ['DaGanChoDonKhac = 20'],
+                                backgroundColor: '#ffffff',
+                                borderColor: '#3b82f6',
+                                borderWidth: 1,
+                                padding: 6,
+                                font: { size: 12 }
+                            },
+                            {
+                                type: 'label',
+                                xValue: 2,
+                                yValue: 3,
+                                content: ['TonKhoKhaDung = 30'],
+                                backgroundColor: '#ffffff',
+                                borderColor: '#3b82f6',
+                                borderWidth: 1,
+                                padding: 6,
+                                font: { size: 12 }
+                            },
+                            {
+                                type: 'label',
+                                xValue: 3,
+                                yValue: 2,
+                                content: ['SoLuongLayTuKho = 30'],
+                                backgroundColor: '#ffffff',
+                                borderColor: '#3b82f6',
+                                borderWidth: 1,
+                                padding: 6,
+                                font: { size: 12 }
+                            },
+                            {
+                                type: 'label',
+                                xValue: 4,
+                                yValue: 2,
+                                content: ['SoLuongCanSX = 70'],
+                                backgroundColor: '#ffffff',
+                                borderColor: '#3b82f6',
+                                borderWidth: 1,
+                                padding: 6,
+                                font: { size: 12 }
+                            },
+                            {
+                                type: 'label',
+                                xValue: 5,
+                                yValue: 1,
+                                content: ['DinhMucCatValue = 10'],
+                                backgroundColor: '#ffffff',
+                                borderColor: '#3b82f6',
+                                borderWidth: 1,
+                                padding: 6,
+                                font: { size: 12 }
+                            },
+                            {
+                                type: 'label',
+                                xValue: 6,
+                                yValue: 0,
+                                content: ['SoCayPhaiCat = 4'],
+                                backgroundColor: '#ffffff',
+                                borderColor: '#3b82f6',
+                                borderWidth: 1,
+                                padding: 6,
+                                font: { size: 12 }
+                            }
+                        ]
+                    }
+                },
+                scales: {
+                    x: { display: false },
+                    y: { display: false }
+                },
+                elements: {
+                    point: {
+                        pointStyle: 'circle'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

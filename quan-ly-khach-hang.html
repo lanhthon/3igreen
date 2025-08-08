@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Khách Hàng</title>
+    <link href="https://unpkg.com/tabulator-tables@5.6.0/dist/css/tabulator_bootstrap5.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+            --light-gray: #f8f9fa;
+            --medium-gray: #dee2e6;
+            --dark-gray: #343a40;
+            --text-color: #495057;
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            padding: 20px;
+            background-color: var(--light-gray);
+            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 98%;
+            margin: auto;
+        }
+
+        .controls-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px 15px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .action-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        #add-customer-btn {
+            background-color: var(--success-color);
+        }
+
+        #manage-pricemech-btn {
+            background-color: var(--info-color);
+        }
+
+        .tabulator-cell .action-icon {
+            cursor: pointer;
+            margin: 0 8px;
+            font-size: 16px;
+            transition: transform 0.2s, color 0.2s;
+        }
+
+        .icon-delete {
+            color: var(--danger-color);
+        }
+
+        .icon-save {
+            color: var(--primary-color);
+        }
+
+        .icon-delete:hover {
+            color: #a71d2a;
+            transform: scale(1.2);
+        }
+
+        .icon-save:hover {
+            color: #0056b3;
+            transform: scale(1.2);
+        }
+
+        .filter-controls input {
+            padding: 8px 12px;
+            border: 1px solid var(--medium-gray);
+            border-radius: 4px;
+            min-width: 350px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 25px;
+            border: none;
+            width: 90%;
+            max-width: 800px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--medium-gray);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .close-btn {
+            color: #6c757d;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--medium-gray);
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--medium-gray);
+            margin-top: 25px;
+            padding-top: 20px;
+            text-align: right;
+        }
+
+        #toast {
+            visibility: hidden;
+            min-width: 280px;
+            margin-left: -140px;
+            background-color: var(--dark-gray);
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 16px;
+            position: fixed;
+            z-index: 2000;
+            left: 50%;
+            bottom: 30px;
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
+
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        #toast.success {
+            background-color: var(--success-color);
+        }
+
+        #toast.error {
+            background-color: var(--danger-color);
+        }
+
+        /* Styles for Price Mechanism Manager */
+        .manager-container {
+            padding: 10px;
+        }
+
+        .manager-container h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .add-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: flex-end;
+        }
+
+        .add-form .form-group {
+            flex-grow: 1;
+            margin-bottom: 0;
+        }
+
+        .add-form button {
+            padding: 8px 15px;
+            height: 35px;
+            color: white;
+            background-color: var(--success-color);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .manager-list {
+            list-style-type: none;
+            padding: 0;
+            max-height: 45vh;
+            overflow-y: auto;
+        }
+
+        .manager-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .manager-list li:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .manager-list li:hover {
+            background-color: #f1f3f5;
+        }
+
+        .item-content {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .item-actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            font-size: 15px;
+            margin-left: 8px;
+        }
+
+        .btn-edit {
+            color: var(--primary-color);
+        }
+
+        .btn-delete {
+            color: var(--danger-color);
+        }
+
+        .btn-save-edit {
+            color: var(--success-color);
+        }
+
+        .btn-cancel {
+            color: var(--dark-gray);
+        }
+
+        .tabulator {
+            border: 1px solid var(--medium-gray);
+        }
+
+        .tabulator .tabulator-header .tabulator-col {
+            border-right: 1px solid var(--medium-gray);
+        }
+
+        .tabulator .tabulator-row .tabulator-cell {
+            border-right: 1px solid var(--medium-gray);
+        }
+
+        .tabulator .tabulator-header .tabulator-col:last-of-type,
+        .tabulator .tabulator-row .tabulator-cell:last-of-type {
+            border-right: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1><i class="fa fa-users"></i> Trang Quản Lý Khách Hàng</h1>
+        <div class="controls-container">
+            <div class="filter-controls">
+                <input id="filter-field" type="text" placeholder="Tìm theo Tên công ty, Người liên hệ, SĐT, Email...">
+            </div>
+            <div class="action-buttons">
+                <button id="manage-pricemech-btn" class="action-button"><i class="fa fa-dollar-sign"></i> Quản lý Cơ chế
+                    giá</button>
+                <button id="add-customer-btn" class="action-button"><i class="fa fa-plus"></i> Thêm mới</button>
+            </div>
+        </div>
+        <div id="customer-table"></div>
+    </div>
+
+    <div id="customer-modal" class="modal"></div>
+    <div id="pricemech-modal" class="modal"></div>
+    <div id="toast"></div>
+
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.6.0/dist/js/tabulator.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            let customerOptions = {};
+            let table;
+
+            // --- UTILITY FUNCTIONS ---
+            function showToast(message, type = 'success') {
+                const toast = document.getElementById("toast");
+                toast.textContent = message;
+                toast.className = `show ${type}`;
+                setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+            }
+
+            async function fetchAPI(url, options) {
+                try {
+                    const response = await fetch(url, options);
+                    const result = await response.json();
+                    if (!response.ok || (result && result.success === false)) {
+                        throw new Error(result.message || 'Server error occurred');
+                    }
+                    return result;
+                } catch (error) {
+                    showToast(error.message, 'error');
+                    console.error('Fetch Error:', error);
+                    throw error;
+                }
+            }
+
+            function populateSelect(selectId, options, valueField, textField) {
+                const select = document.getElementById(selectId);
+                if (!select) return;
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">-- Chọn --</option>';
+                if (!Array.isArray(options)) return;
+                options.forEach(option => {
+                    const optionEl = document.createElement('option');
+                    optionEl.value = option[valueField];
+                    optionEl.textContent = option[textField];
+                    select.appendChild(optionEl);
+                });
+                select.value = currentValue;
+            }
+
+            // --- PRICE MECHANISM MANAGEMENT ---
+            async function priceMechAPI(action, data = {}) {
+                return await fetchAPI('api/handle_pricemech.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action, ...data })
+                });
+            }
+
+            function renderPriceMechList(items) {
+                const listElement = document.getElementById('pricemech-list');
+                if (!listElement) return;
+                listElement.innerHTML = '';
+                if (!items || items.length === 0) {
+                    listElement.innerHTML = '<li>Không có dữ liệu.</li>';
+                    return;
+                }
+                items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.dataset.id = item.CoCheGiaID;
+                    li.innerHTML = `
+                        <div class="item-content">
+                            <span class="item-detail"><b>Mã:</b> <span class="data-MaCoChe">${item.MaCoChe}</span></span>
+                            <span class="item-detail"><b>Tên:</b> <span class="data-TenCoChe">${item.TenCoChe}</span></span>
+                            <span class="item-detail"><b>Điều chỉnh:</b> <span class="data-PhanTramDieuChinh">${item.PhanTramDieuChinh}</span>%</span>
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn-edit" title="Sửa"><i class="fa fa-pencil"></i></button>
+                            <button class="btn-delete" title="Xóa"><i class="fa fa-trash"></i></button>
+                        </div>
+                    `;
+                    listElement.appendChild(li);
+                });
+            }
+
+            async function loadPriceMechs() {
+                try {
+                    const result = await priceMechAPI('get_all');
+                    renderPriceMechList(result.data);
+                } catch (error) { /* Handled by fetchAPI */ }
+            }
+
+            async function refreshAllOptionsAndData() {
+                showToast("Đang làm mới dữ liệu...", "info");
+                const options = await fetchCustomerOptions();
+                if (table && options) {
+                    customerOptions = options;
+                    table.setColumns(createColumnDefinitions(options));
+                    populateSelect('CoCheGiaID', customerOptions.coCheGia, 'CoCheGiaID', 'TenCoChe');
+                    showToast("Làm mới thành công!", "success");
+                }
+            }
+
+            // --- CUSTOMER MANAGEMENT ---
+            async function loadAllCustomers() {
+                showToast("Đang tải dữ liệu khách hàng...", "info");
+                try {
+                    const result = await fetchAPI("api/get_customers_paged.php?size=9999");
+                    showToast(`Tải thành công ${result.data.length} khách hàng!`, "success");
+                    return result.data;
+                } catch (error) {
+                    showToast("Lỗi khi tải dữ liệu khách hàng.", "error");
+                    return [];
+                }
+            }
+
+            function createColumnDefinitions(options) {
+                const coCheGiaValues = { null: "--Chưa chọn--", "": "--Chưa chọn--" };
+                (options.coCheGia || []).forEach(item => { coCheGiaValues[item.CoCheGiaID] = item.TenCoChe; });
+
+                return [
+                    { title: "ID", field: "KhachHangID", width: 60, headerSort: false },
+                    { title: "Tên Công Ty", field: "TenCongTy", minWidth: 250, editor: "input", frozen: true },
+                    { title: "Người Liên Hệ", field: "NguoiLienHe", width: 180, editor: "input" },
+                    { title: "Số Điện Thoại", field: "SoDienThoai", width: 150, editor: "input" },
+                    { title: "Số Di Động", field: "SoDiDong", width: 150, editor: "input" },
+                    { title: "Email", field: "Email", width: 200, editor: "input" },
+                    { title: "Địa Chỉ", field: "DiaChi", width: 300, editor: "input" },
+                    { title: "Mã Số Thuế", field: "MaSoThue", width: 150, editor: "input" },
+                    { title: "Cơ Chế Giá", field: "CoCheGiaID", width: 180, editor: "list", editorParams: { values: coCheGiaValues }, formatter: "lookup", formatterParams: coCheGiaValues },
+                    {
+                        title: "Thao tác", hozAlign: "center", width: 100, frozen: "right", headerSort: false,
+                        formatter: (c) => `<i class="fa-solid fa-save action-icon icon-save" title="Lưu"></i> <i class="fa-solid fa-trash-can action-icon icon-delete" title="Xóa"></i>`,
+                        cellClick: (e, cell) => {
+                            const row = cell.getRow();
+                            if (e.target.classList.contains('icon-delete')) {
+                                if (confirm(`Bạn có chắc muốn xóa khách hàng "${row.getData().TenCongTy}"?`)) {
+                                    deleteCustomer(row.getData().KhachHangID, row);
+                                }
+                            } else if (e.target.classList.contains('icon-save')) {
+                                saveCustomerUpdate(row);
+                            }
+                        }
+                    },
+                ];
+            }
+
+            async function saveCustomerUpdate(row) {
+                row.getElement().style.opacity = '0.5';
+                try {
+                    await fetchAPI('api/update_customer.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(row.getData())
+                    });
+                    showToast('Cập nhật khách hàng thành công!', 'success');
+                    row.reformat();
+                } finally {
+                    row.getElement().style.opacity = '1';
+                }
+            }
+
+            async function deleteCustomer(id, row) {
+                try {
+                    await fetchAPI('api/delete_customer.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: id })
+                    });
+                    showToast('Xóa khách hàng thành công!', 'success');
+                    row.delete();
+                } catch (error) { /* Handled */ }
+            }
+
+            async function fetchCustomerOptions() {
+                try {
+                    const result = await fetchAPI('api/get_customer_options.php');
+                    return result.data;
+                } catch (error) { return null; }
+            }
+
+            function applyTableFilters() {
+                const filterValue = document.getElementById("filter-field").value;
+                if (filterValue) {
+                    table.setFilter([
+                        { field: "TenCongTy", type: "like", value: filterValue },
+                        { field: "NguoiLienHe", type: "like", value: filterValue },
+                        { field: "SoDienThoai", type: "like", value: filterValue },
+                        { field: "Email", type: "like", value: filterValue },
+                    ]);
+                } else {
+                    table.clearFilter();
+                }
+            }
+
+            function setupEventListeners() {
+                const addCustomerBtn = document.getElementById('add-customer-btn');
+                const managePriceMechBtn = document.getElementById('manage-pricemech-btn');
+                const customerModal = document.getElementById('customer-modal');
+                const priceMechModal = document.getElementById('pricemech-modal');
+                let filterTimeout;
+
+                document.getElementById("filter-field").addEventListener("keyup", () => {
+                    clearTimeout(filterTimeout);
+                    filterTimeout = setTimeout(applyTableFilters, 300);
+                });
+
+                addCustomerBtn.onclick = () => {
+                    document.getElementById('customer-form').reset();
+                    document.getElementById('modal-title').textContent = "Thêm Khách Hàng Mới";
+                    populateSelect('CoCheGiaID', customerOptions.coCheGia, 'CoCheGiaID', 'TenCoChe');
+                    customerModal.style.display = "block";
+                };
+
+                managePriceMechBtn.onclick = () => {
+                    priceMechModal.style.display = "block";
+                    loadPriceMechs();
+                };
+
+                document.body.addEventListener('click', function (event) {
+                    if (event.target.classList.contains('close-btn') || event.target.classList.contains('modal')) {
+                        if (event.target.closest('.modal')) {
+                            event.target.closest('.modal').style.display = 'none';
+                        }
+                    }
+
+                    // Price Mech Edit Button
+                    if (event.target.closest('.btn-edit')) {
+                        const li = event.target.closest('li');
+                        const id = li.dataset.id;
+                        const ma = li.querySelector('.data-MaCoChe').textContent;
+                        const ten = li.querySelector('.data-TenCoChe').textContent;
+                        const phanTram = li.querySelector('.data-PhanTramDieuChinh').textContent;
+
+                        li.innerHTML = `
+                            <div class="item-content">
+                                <input type="text" class="edit-MaCoChe" value="${ma}" placeholder="Mã" style="width: 80px;">
+                                <input type="text" class="edit-TenCoChe" value="${ten}" placeholder="Tên cơ chế" style="flex-grow: 1;">
+                                <input type="number" step="0.01" class="edit-PhanTramDieuChinh" value="${phanTram}" placeholder="%" style="width: 80px;">
+                            </div>
+                            <div class="item-actions">
+                                <button class="btn-save-edit" title="Lưu"><i class="fa fa-check"></i></button>
+                                <button class="btn-cancel" title="Hủy"><i class="fa fa-times"></i></button>
+                            </div>
+                        `;
+                    }
+
+                    // Price Mech Cancel Edit Button
+                    if (event.target.closest('.btn-cancel')) {
+                        loadPriceMechs();
+                    }
+
+                    // Price Mech Save Edit Button
+                    if (event.target.closest('.btn-save-edit')) {
+                        const li = event.target.closest('li');
+                        const data = {
+                            id: li.dataset.id,
+                            MaCoChe: li.querySelector('.edit-MaCoChe').value,
+                            TenCoChe: li.querySelector('.edit-TenCoChe').value,
+                            PhanTramDieuChinh: li.querySelector('.edit-PhanTramDieuChinh').value
+                        };
+                        priceMechAPI('update', data).then(() => {
+                            loadPriceMechs();
+                            refreshAllOptionsAndData();
+                        });
+                    }
+
+                    // Price Mech Delete Button
+                    if (event.target.closest('.btn-delete')) {
+                        const li = event.target.closest('li');
+                        const id = li.dataset.id;
+                        if (confirm('Bạn có chắc muốn xóa cơ chế giá này?')) {
+                            priceMechAPI('delete', { id }).then(() => {
+                                loadPriceMechs();
+                                refreshAllOptionsAndData();
+                            });
+                        }
+                    }
+                });
+
+                document.body.addEventListener('submit', async function (event) {
+                    // Add/Update Customer Form
+                    if (event.target.id === 'customer-form') {
+                        event.preventDefault();
+                        const formData = new FormData(event.target);
+                        const data = Object.fromEntries(formData.entries());
+                        try {
+                            await fetchAPI('api/create_customer.php', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(data)
+                            });
+                            showToast('Thêm khách hàng thành công!', 'success');
+                            customerModal.style.display = "none";
+                            const newTableData = await loadAllCustomers();
+                            table.setData(newTableData);
+                        } catch (error) { /* Handled */ }
+                    }
+                    // Add Price Mech Form
+                    if (event.target.id === 'form-add-pricemech') {
+                        event.preventDefault();
+                        const data = {
+                            MaCoChe: document.getElementById('add-MaCoChe').value,
+                            TenCoChe: document.getElementById('add-TenCoChe').value,
+                            PhanTramDieuChinh: document.getElementById('add-PhanTramDieuChinh').value
+                        };
+                        await priceMechAPI('add', data);
+                        event.target.reset();
+                        loadPriceMechs();
+                        refreshAllOptionsAndData();
+                    }
+                });
+            }
+
+            async function initialize() {
+                // Inject Modal HTML
+                document.getElementById('customer-modal').innerHTML = `
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 id="modal-title">Thêm Khách Hàng Mới</h2>
+                            <span class="close-btn">&times;</span>
+                        </div>
+                        <form id="customer-form">
+                            <div class="form-grid">
+                                <div class="form-group"> <label for="TenCongTy">Tên Công Ty (*)</label> <input type="text" id="TenCongTy" name="TenCongTy" required> </div>
+                                <div class="form-group"> <label for="NguoiLienHe">Người Liên Hệ</label> <input type="text" id="NguoiLienHe" name="NguoiLienHe"> </div>
+                                <div class="form-group"> <label for="SoDienThoai">Số Điện Thoại</label> <input type="text" id="SoDienThoai" name="SoDienThoai"> </div>
+                                <div class="form-group"> <label for="SoDiDong">Số Di Động (HP)</label> <input type="text" id="SoDiDong" name="SoDiDong"> </div>
+                                <div class="form-group"> <label for="Email">Email</label> <input type="email" id="Email" name="Email"> </div>
+                                <div class="form-group"> <label for="DiaChi">Địa Chỉ</label> <input type="text" id="DiaChi" name="DiaChi"> </div>
+                                <div class="form-group"> <label for="MaSoThue">Mã Số Thuế</label> <input type="text" id="MaSoThue" name="MaSoThue"> </div>
+                                <div class="form-group"> <label for="CoCheGiaID">Cơ Chế Giá</label> <select id="CoCheGiaID" name="CoCheGiaID"></select> </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="action-button" style="background-color: var(--primary-color);">Lưu Khách Hàng</button>
+                            </div>
+                        </form>
+                    </div>`;
+
+                document.getElementById('pricemech-modal').innerHTML = `
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2><i class="fa fa-dollar-sign"></i> Quản Lý Cơ Chế Giá</h2>
+                            <span class="close-btn">&times;</span>
+                        </div>
+                        <div class="manager-container">
+                            <form id="form-add-pricemech" class="add-form">
+                                <div class="form-group"><label>Mã Cơ Chế</label><input type="text" id="add-MaCoChe" required></div>
+                                <div class="form-group"><label>Tên Cơ Chế</label><input type="text" id="add-TenCoChe" required></div>
+                                <div class="form-group"><label>% Điều Chỉnh</label><input type="number" step="0.01" id="add-PhanTramDieuChinh" required></div>
+                                <button type="submit"><i class="fa fa-plus"></i> Thêm</button>
+                            </form>
+                            <ul id="pricemech-list" class="manager-list"></ul>
+                        </div>
+                    </div>`;
+
+                // Fetch options and initialize table
+                customerOptions = await fetchCustomerOptions();
+                if (!customerOptions) {
+                    showToast("Lỗi nghiêm trọng: Không thể tải các tùy chọn.", "error");
+                    return;
+                }
+
+                table = new Tabulator("#customer-table", {
+                    height: "75vh",
+                    layout: "fitColumns",
+                    columns: createColumnDefinitions(customerOptions),
+                    pagination: true,
+                    paginationMode: "local",
+                    paginationSize: 50,
+                    paginationSizeSelector: [10, 25, 50, 100, 200, true],
+                    placeholder: "Đang tải...",
+                });
+
+                const tableData = await loadAllCustomers();
+                table.setData(tableData);
+                if (tableData.length === 0) {
+                    table.setPlaceholder("Không có dữ liệu khách hàng.");
+                }
+
+                setupEventListeners();
+            }
+
+            initialize();
+        });
+    </script>
+</body>
+
+</html>

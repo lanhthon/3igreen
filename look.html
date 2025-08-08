@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khóa Màn Hình</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            font-family: Arial, sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+        .lock-screen {
+            text-align: center;
+            user-select: none;
+        }
+        .time {
+            font-size: 80px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .date {
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+        .password-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .password-input {
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 25px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-align: center;
+            width: 200px;
+            outline: none;
+        }
+        .password-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .unlock-btn {
+            padding: 10px 30px;
+            font-size: 16px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .unlock-btn:hover {
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+        .error {
+            color: #ff6b6b;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="lock-screen">
+        <div class="time" id="time"></div>
+        <div class="date" id="date"></div>
+        <div class="password-container">
+            <input type="password" class="password-input" id="password" placeholder="Nhập mật khẩu">
+            <button class="unlock-btn" onclick="unlock()">Mở Khóa</button>
+            <div class="error" id="error">Mật khẩu không đúng!</div>
+        </div>
+    </div>
+
+    <script>
+        // Cập nhật thời gian và ngày
+        function updateTime() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const date = now.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('time').textContent = time;
+            document.getElementById('date').textContent = date;
+        }
+
+        // Kích hoạt chế độ toàn màn hình khi tải trang
+        function enterFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { // Firefox
+                elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { // Chrome, Safari, Opera
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { // IE/Edge
+                elem.msRequestFullscreen();
+            }
+        }
+
+        // Thoát chế độ toàn màn hình
+        function exitFullscreen() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { // Firefox
+                document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { // Chrome, Safari, Opera
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { // IE/Edge
+                document.msExitFullscreen();
+            }
+        }
+
+        // Xử lý mở khóa
+        function unlock() {
+            const password = document.getElementById('password').value;
+            const error = document.getElementById('error');
+            const correctPassword = "123456"; // Mật khẩu mặc định
+
+            if (password === correctPassword) {
+                error.style.display = 'none';
+                exitFullscreen();
+                alert("Màn hình đã được mở khóa!");
+                // Có thể thêm logic để chuyển hướng hoặc hiển thị nội dung khác
+            } else {
+                error.style.display = 'block';
+                document.getElementById('password').value = '';
+            }
+        }
+
+        // Cho phép mở khóa bằng phím Enter
+        document.getElementById('password').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                unlock();
+            }
+        });
+
+        // Tự động kích hoạt toàn màn hình khi tải trang
+        window.onload = function() {
+            enterFullscreen();
+            updateTime();
+            setInterval(updateTime, 1000);
+        };
+    </script>
+</body>
+</html>

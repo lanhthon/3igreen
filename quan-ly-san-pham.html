@@ -1,0 +1,1594 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Sản Phẩm Chi Tiết</title>
+    <link href="https://unpkg.com/tabulator-tables@5.6.1/dist/css/tabulator_bootstrap5.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #0dcaf0;
+            --light-gray: #f8f9fa;
+            --medium-gray: #dee2e6;
+            --dark-gray: #343a40;
+            --text-color: #495057;
+            --border-radius: 0.375rem;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 20px;
+            background-color: var(--light-gray);
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 98%;
+            margin: auto;
+        }
+
+        .controls-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            /* Changed to 1 column to make room for fixed buttons */
+            gap: 20px;
+            align-items: end;
+            margin-bottom: 20px;
+            padding: 1rem;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, .075);
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+        }
+
+        #filter-field {
+            min-width: 250px;
+        }
+
+        /* --- Fixed Action Buttons Styles --- */
+        .fixed-action-buttons-container {
+            position: fixed;
+            bottom: 30px;
+            /* Adjust as needed */
+            right: 30px;
+            /* Adjust as needed */
+            z-index: 100;
+            /* Ensure it stays on top */
+            display: flex;
+            flex-direction: column;
+            /* Stack buttons vertically */
+            align-items: flex-end;
+            /* Align buttons to the right */
+            gap: 10px;
+            /* Space between stacked buttons */
+        }
+
+        .action-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            /* Slightly reduced padding */
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 13px;
+            /* Smaller font size */
+            font-weight: 500;
+            margin-left: 0;
+            /* Remove left margin if stacked */
+            min-width: 140px;
+            /* Consistent minimum width */
+            justify-content: center;
+            /* Center content within button */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            /* Subtle shadow for floating effect */
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .action-button i {
+            font-size: 14px;
+            /* Adjust icon size */
+        }
+
+        /* --- Focus States for Professionalism --- */
+        .filter-group input:focus,
+        .filter-group select:focus,
+        .form-group input:focus,
+        .form-group select:focus,
+        .action-button:focus,
+        .tab-link:focus,
+        .add-option-btn:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 3% auto;
+            padding: 25px;
+            border: none;
+            width: 90%;
+            max-width: 1000px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, .15);
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--medium-gray);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .close-btn {
+            color: #6c757d;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+            box-sizing: border-box;
+        }
+
+        /* Style cho input readonly */
+        .form-group input[readonly] {
+            background-color: #e9ecef;
+            /* Màu nền xám nhạt để dễ phân biệt */
+            cursor: not-allowed;
+            /* Con trỏ không được phép */
+        }
+
+        /* Thêm style để ẩn các form-group không cần thiết */
+        .form-group.hidden {
+            display: none;
+        }
+
+
+        .input-with-button {
+            display: flex;
+            gap: 5px;
+        }
+
+        .input-with-button select {
+            flex-grow: 1;
+        }
+
+        .add-option-btn {
+            flex-shrink: 0;
+            width: 38px;
+            height: 38px;
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .modal-footer {
+            text-align: right;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid var(--medium-gray);
+        }
+
+        #toast {
+            visibility: hidden;
+            min-width: 280px;
+            margin-left: -140px;
+            background-color: var(--dark-gray);
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 16px;
+            position: fixed;
+            z-index: 2000;
+            left: 50%;
+            bottom: 30px;
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
+
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        #toast.success {
+            background-color: var(--success-color);
+        }
+
+        #toast.error {
+            background-color: var(--danger-color);
+        }
+
+        .tabulator-cell .action-icon {
+            cursor: pointer;
+            margin: 0 8px;
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+
+        .icon-edit {
+            color: var(--warning-color);
+        }
+
+        .icon-save {
+            color: var(--primary-color);
+        }
+
+        .icon-delete {
+            color: var(--danger-color);
+        }
+
+        .icon-inventory {
+            color: var(--info-color);
+        }
+
+        /* New style for product name column action */
+        .product-name-cell {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .product-name-cell .product-name-text {
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .product-name-cell .product-action-icon {
+            margin-left: 10px;
+            cursor: pointer;
+            color: var(--primary-color);
+            /* Or any color you prefer */
+            font-size: 1.1em;
+        }
+
+
+        #data-manager-body .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--medium-gray);
+            margin-bottom: 15px;
+        }
+
+        #data-manager-body .tab-link {
+            padding: 10px 15px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+        }
+
+        #data-manager-body .tab-link.active {
+            border-color: var(--medium-gray);
+            border-bottom-color: white;
+            font-weight: 500;
+            background-color: white;
+            border-radius: 4px 4px 0 0;
+            margin-bottom: -1px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .attribute-manager-grid {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 20px;
+            min-height: 50vh;
+        }
+
+        .attributes-list,
+        .data-item-list {
+            border-right: 1px solid var(--medium-gray);
+            padding-right: 20px;
+            overflow-y: auto;
+        }
+
+        .attributes-list ul,
+        .options-list ul,
+        .data-item-list ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .attributes-list-item,
+        .options-list-item,
+        .data-item {
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .attributes-list-item:hover,
+        .data-item:hover {
+            background-color: var(--light-gray);
+        }
+
+        .attributes-list-item.active {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+        }
+
+        .options-list-item input,
+        .data-item input {
+            flex-grow: 1;
+            border: 1px solid var(--medium-gray);
+            padding: 6px 10px;
+            border-radius: 4px;
+        }
+
+        .options-list-item .option-actions,
+        .data-item .item-actions {
+            display: flex;
+            gap: 5px;
+            margin-left: 10px;
+        }
+
+        .option-actions button,
+        .item-actions button {
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .add-item-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--medium-gray);
+        }
+
+        .add-item-form input {
+            flex-grow: 1;
+        }
+
+        .tabulator {
+            border: 1px solid var(--medium-gray);
+        }
+
+        .tabulator .tabulator-header .tabulator-col {
+            border-right: 1px solid var(--medium-gray);
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .tabulator .tabulator-row .tabulator-cell {
+            border-right: 1px solid var(--medium-gray);
+        }
+
+        .tabulator .tabulator-row {
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        /* Styles for pagination control */
+        .pagination-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, .075);
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .pagination-info select {
+            padding: 6px 10px;
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+        }
+
+        /* Tabulator row hover effect */
+        .tabulator .tabulator-row:hover {
+            background-color: var(--light-gray);
+        }
+
+        /* Tabulator selected row style */
+        .tabulator-row.tabulator-selected {
+            background-color: var(--primary-color) !important;
+            /* Use primary color */
+            color: white;
+        }
+
+        .tabulator-row.tabulator-selected .action-icon,
+        .tabulator-row.tabulator-selected .product-action-icon {
+            color: white;
+            /* Ensure icons are visible on selected row */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1><i class="fa fa-boxes-stacked"></i> Danh Sách Sản Phẩm Chi Tiết</h1>
+        <div class="controls-container">
+            <div class="filter-section">
+                <div class="filter-group"><label>Nhóm SP</label><select id="filter-group-id"></select></div>
+                <div class="filter-group"><label>Loại Phân Loại</label><select id="filter-loai-id"></select></div>
+                <div class="filter-group"><label>Tìm kiếm</label><input id="filter-field" type="text"
+                        placeholder="Mã, tên sản phẩm..."></div>
+                <div class="filter-group"><label>&nbsp;</label><button id="clear-filters-btn" class="action-button"
+                        style="background-color: var(--dark-gray);"><i class="fa fa-times"></i> Xóa Lọc</button></div>
+            </div>
+        </div>
+        <div id="variants-table"></div>
+
+        <div class="pagination-info">
+            <span id="total-variants"></span>
+            <div class="filter-group">
+                <label for="page-size-select">Hiển thị:</label>
+                <select id="page-size-select">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="all">Tất cả</option>
+                </select>
+                <span>sản phẩm mỗi trang</span>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="fixed-action-buttons-container">
+        <button id="delete-selected-btn" class="action-button"
+            style="background-color: var(--danger-color); display: none;"><i class="fa fa-trash-can"></i> Xóa đã
+            chọn</button>
+        <button id="data-manager-btn" class="action-button" style="background-color: var(--info-color);"><i
+                class="fa fa-database"></i> Quản lý Dữ liệu</button>
+        <button id="add-product-btn" class="action-button" style="background-color: var(--primary-color);"><i
+                class="fa fa-plus"></i> Thêm SP Gốc</button>
+        <button id="add-variant-btn" class="action-button" style="background-color: var(--success-color);"><i
+                class="fa fa-plus"></i> Thêm SP Chi tiết</button>
+    </div>
+
+
+    <div id="variant-form-modal"></div>
+    <div id="product-form-modal"></div>
+    <div id="inventory-modal"></div>
+    <div id="data-manager-modal"></div>
+    <div id="toast"></div>
+
+    <script src="https://unpkg.com/tabulator-tables@5.6.1/dist/js/tabulator.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const API_URL = 'api/api.php';
+            let variantsTable;
+            let variantFormState = {};
+            let currentVariantId = null;
+            let shouldRestoreVariantForm = false;
+
+            // --- HÀM TIỆN ÍCH ---
+            function showToast(message, type = 'success') {
+                const toast = document.getElementById("toast");
+                toast.textContent = message;
+                toast.className = `show ${type}`;
+                setTimeout(() => {
+                    toast.className = toast.className.replace("show", "");
+                }, 4000);
+            }
+            async function apiRequest(action, data = {}) {
+                try {
+                    const response = await fetch(`${API_URL}?action=${action}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await response.json();
+                    if (!result.success) throw new Error(result.message || 'API Error');
+                    return result.data;
+                } catch (error) {
+                    showToast(error.message, 'error');
+                    console.error('API Request Error:', error);
+                    throw error;
+                }
+            }
+
+            function populateSelect(selectEl, data, valueField, textField, addDefault = true) {
+                selectEl.innerHTML = addDefault ? '<option value="">-- Chọn --</option>' : '';
+                data.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item[valueField];
+                    option.textContent = item[textField];
+                    if (item.base_sku) {
+                        option.dataset.baseSku = item.base_sku;
+                    }
+                    if (item.sku_prefix) {
+                        option.dataset.skuPrefix = item.sku_prefix;
+                    }
+                    if (item.name_prefix) {
+                        option.dataset.namePrefix = item.name_prefix;
+                    }
+                    selectEl.appendChild(option);
+                });
+            }
+
+            function createModal(id) {
+                let modal = document.getElementById(id);
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = id;
+                    document.body.appendChild(modal);
+                }
+                modal.className = 'modal';
+                return modal;
+            }
+
+            // --- BẢNG BIẾN THỂ & BỘ LỌC ---
+            function initializeTable() {
+                variantsTable = new Tabulator("#variants-table", {
+                    height: "75vh",
+                    layout: "fitColumns",
+                    // pagination: "local", // Giữ lại local pagination
+                    paginationSize: 50, // Kích thước trang mặc định
+                    paginationSizeSelector: [10, 25, 50, 100,
+                        true], // Cho phép chọn số lượng trên mỗi trang
+                    paginationElement: "#page-size-select", // Sử dụng select box tùy chỉnh cho kích thước trang
+                    placeholder: "Đang tải dữ liệu...",
+                    selectable: true,
+                    index: "variant_id",
+                    initialSort: [{
+                        column: "variant_id",
+                        dir: "desc"
+                    }],
+                    rowSelectionChanged: function (data, rows) {
+                        const deleteBtn = document.getElementById('delete-selected-btn');
+                        const count = data.length;
+                        if (count > 0) {
+                            deleteBtn.innerHTML = `<i class="fa fa-trash-can"></i> Xóa (${count}) mục`;
+                            deleteBtn.style.display = 'inline-flex';
+                        } else {
+                            deleteBtn.style.display = 'none';
+                        }
+                    },
+                    dataLoaded: function (data) {
+                        // Cập nhật tổng số sản phẩm hiển thị trên giao diện
+                        document.getElementById('total-variants').textContent =
+                            `Tổng số: ${data.length} sản phẩm`;
+                    },
+                    columns: [{
+                        formatter: "rowSelection",
+                        titleFormatter: "rowSelection",
+                        hozAlign: "center",
+                        headerSort: false,
+                        width: 60,
+                        frozen: true,
+                        cellClick: function (e, cell) {
+                            cell.getRow().toggleSelect();
+                        }
+                    },
+                    {
+                        title: "ID",
+                        field: "variant_id",
+                        width: 60,
+                        frozen: true
+                    },
+                    {
+                        title: "Mã SKU",
+                        field: "variant_sku",
+                        width: 180,
+                        frozen: true
+                    },
+                    {
+                        title: "Tên Biến Thể",
+                        field: "variant_name",
+                        width: 250
+                    },
+                    {
+                        title: "Tên SP Gốc",
+                        field: "product_name",
+                        width: 250,
+                        formatter: function (cell, formatterParams, onRendered) {
+                            const data = cell.getRow().getData();
+                            return `
+                                <div class="product-name-cell">
+                                    <span class="product-name-text">${data.product_name}</span>
+                                    <i class="fa-solid fa-edit product-action-icon" title="Sửa SP Gốc" data-product-id="${data.product_id}"></i>
+                                </div>
+                            `;
+                        },
+                        cellClick: function (e, cell) {
+                            // Chỉ kích hoạt form chỉnh sửa sản phẩm nếu icon chỉnh sửa được nhấp
+                            if (e.target.classList.contains('product-action-icon')) {
+                                const productId = e.target.dataset.productId;
+                                if (productId) {
+                                    openProductForm(productId);
+                                }
+                            }
+                        }
+                    },
+                    {
+                        title: "Nhóm SP",
+                        field: "group_name",
+                        width: 150
+                    },
+                    {
+                        title: "Loại Phân Loại",
+                        field: "loai_name",
+                        width: 250
+                    },
+                    {
+                        title: "Giá",
+                        field: "price",
+                        width: 120,
+                        hozAlign: "right",
+                        formatter: "money",
+                        formatterParams: {
+                            symbol: " ₫"
+                        }
+                    },
+                    {
+                        title: "Tồn kho",
+                        field: "inventory_display", // Vẫn hiển thị chuỗi có tên đơn vị từ sản phẩm gốc
+                        width: 200,
+                        hozAlign: "left"
+                    },
+                    {
+                        title: "ID Thông Số",
+                        field: "ID Thông Số",
+                        width: 120,
+                        hozAlign: "center"
+                    },
+                    {
+                        title: "Độ dày",
+                        field: "Độ dày",
+                        width: 100,
+                        hozAlign: "center"
+                    },
+                    {
+                        title: "Bản rộng",
+                        field: "Bản rộng",
+                        width: 100,
+                        hozAlign: "center"
+                    },
+                    {
+                        title: "Đường kính trong",
+                        field: "Đường kính trong",
+                        width: 150,
+                        hozAlign: "center"
+                    },
+                    {
+                        title: "Kích thước ren",
+                        field: "Kích thước ren",
+                        width: 120,
+                        hozAlign: "center"
+                    },
+                    {
+                        title: "Nguồn gốc",
+                        field: "Nguồn gốc",
+                        width: 120,
+                        hozAlign: "center"
+                    },
+                    {
+                        title: "Xử lý bề mặt",
+                        field: "Xử lý bề mặt",
+                        width: 150,
+                        hozAlign: "center"
+                    },
+                    // Thêm cột cho Suffix SKU
+                    {
+                        title: "Hậu tố SKU",
+                        field: "sku_suffix",
+                        width: 120,
+                        hozAlign: "center"
+                    },
+                    {
+                        field: "minimum_stock_level",
+                        visible: false
+                    },
+                    {
+                        field: "base_unit_name", // Vẫn cần trường này để Tabulator có dữ liệu cho inventory_display
+                        visible: false
+                    },
+                    {
+                        field: "quantity_in_base_unit", // Vẫn cần trường này để Tabulator có dữ liệu cho inventory_display
+                        visible: false
+                    },
+                    {
+                        title: "Thao Tác",
+                        hozAlign: "center",
+                        width: 120,
+                        headerSort: false,
+                        formatter: (cell) =>
+                            `<i class="fa-solid fa-edit action-icon icon-edit" title="Sửa Biến thể"></i>
+                                             <i class="fa-solid fa-boxes-packing action-icon icon-inventory" title="Quản lý Tồn kho"></i>`,
+                        cellClick: (e, cell) => {
+                            e.stopPropagation();
+                            const data = cell.getRow().getData();
+                            if (e.target.closest('.icon-edit')) {
+                                openVariantForm(data.variant_id);
+                            }
+                            if (e.target.closest('.icon-inventory')) {
+                                openInventoryManager(data.variant_id, data.variant_sku);
+                            }
+                        }
+                    }
+                    ]
+                });
+                loadAllVariants();
+            }
+
+            async function loadAllVariants() {
+                try {
+                    const data = await apiRequest('get_all_variants_flat');
+                    variantsTable.setData(data); // Cập nhật dữ liệu cho bảng
+                    // Tabulator's dataLoaded callback will update total-variants span
+                    // Set pagination size if it was changed by user
+                    const pageSizeSelect = document.getElementById('page-size-select');
+                    if (pageSizeSelect.value === 'all') {
+                        variantsTable.setPageSize(data.length); // Hiển thị tất cả
+                    } else {
+                        variantsTable.setPageSize(parseInt(pageSizeSelect.value));
+                    }
+                } catch (error) {
+                    variantsTable.setPlaceholder("Lỗi tải dữ liệu.");
+                }
+            }
+
+            async function initializeFilters() {
+                const groupSelect = document.getElementById('filter-group-id');
+                const loaiSelect = document.getElementById('filter-loai-id');
+                const pageSizeSelect = document.getElementById('page-size-select'); // Lấy select phân trang
+
+                try {
+                    const [groups, loai] = await Promise.all([apiRequest('get_product_groups'), apiRequest(
+                        'get_all_loai')]);
+                    populateSelect(groupSelect, groups, 'group_id', 'name');
+                    populateSelect(loaiSelect, loai, 'LoaiID', 'TenLoai');
+                } catch (error) {
+                    console.error("Lỗi tải bộ lọc");
+                }
+                document.getElementById('filter-field').addEventListener('keyup', applyTableFilters);
+                groupSelect.addEventListener('change', applyTableFilters);
+                loaiSelect.addEventListener('change', applyTableFilters);
+
+                // Thêm sự kiện cho dropdown chọn số lượng sản phẩm
+                pageSizeSelect.addEventListener('change', function () {
+                    const selectedSize = this.value;
+                    if (selectedSize === 'all') {
+                        variantsTable.setPageSize(variantsTable
+                            .getDataCount()); // Lấy tổng số bản ghi và hiển thị tất cả
+                    } else {
+                        variantsTable.setPageSize(parseInt(selectedSize));
+                    }
+                });
+            }
+
+            function applyTableFilters() {
+                const filters = [];
+                const textValue = document.getElementById('filter-field').value;
+                const groupId = document.getElementById('filter-group-id').value;
+                const loaiId = document.getElementById('filter-loai-id').value;
+                if (textValue) {
+                    filters.push([{
+                        field: 'variant_sku',
+                        type: 'like',
+                        value: textValue
+                    }, {
+                        field: 'variant_name',
+                        type: 'like',
+                        value: textValue
+                    }, {
+                        field: 'product_name',
+                        type: 'like',
+                        value: textValue
+                    }]);
+                }
+                if (groupId) {
+                    filters.push({
+                        field: 'group_id',
+                        type: '=',
+                        value: groupId
+                    });
+                }
+                if (loaiId) {
+                    filters.push({
+                        field: 'LoaiID',
+                        type: '=',
+                        value: loaiId
+                    });
+                }
+                variantsTable.setFilter(filters);
+            }
+
+            // --- FORM THÊM/SỬA SẢN PHẨM GỐC ---
+            async function openProductForm(productId = null) {
+                const modal = createModal('product-form-modal');
+                modal.innerHTML =
+                    `<div class="modal-content" style="max-width: 700px;"><div class="modal-header"><h2 id="product-form-title"></h2><span class="close-btn">&times;</span></div><form id="product-form"></form></div>`;
+                const form = modal.querySelector('#product-form');
+                const title = modal.querySelector('#product-form-title');
+                let details = {};
+
+                // Vẫn cần lấy đơn vị để chọn cho sản phẩm gốc
+                const [groups, units] = await Promise.all([
+                    apiRequest('get_product_groups'),
+                    apiRequest('get_all_units')
+                ]);
+
+                if (productId) {
+                    title.textContent = "Chỉnh sửa Sản phẩm gốc";
+                    details = await apiRequest('get_product_details', {
+                        product_id: productId
+                    });
+                } else {
+                    title.textContent = "Thêm Sản phẩm gốc mới";
+                }
+                form.innerHTML = `
+                <input type="hidden" name="product_id" value="${productId || ''}">
+                <div class="form-grid">
+                    <div class="form-group"><label>Tên Sản phẩm gốc</label><input type="text" name="name" required value="${details.name || ''}"></div>
+                    <div class="form-group"><label>Mã Gốc (Base SKU)</label><input type="text" name="base_sku" required value="${details.base_sku || ''}"></div>
+                    <div class="form-group"><label>Tiền tố Mã (SKU Prefix)</label><input type="text" name="sku_prefix" value="${details.sku_prefix || ''}" placeholder="Ví dụ: PUR-S"></div>
+                    <div class="form-group"><label>Tiền tố Tên (Name Prefix)</label><input type="text" name="name_prefix" value="${details.name_prefix || ''}" placeholder="Ví dụ: Gối đỡ đế vuông"></div>
+                    <div class="form-group"><label>Nhóm Sản phẩm</label><select name="group_id" required></select></div>
+                    <div class="form-group"><label>Đơn vị cơ sở</label><select name="base_unit_id" required></select></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="action-button">Lưu</button></div>`;
+
+                const groupSelect = form.querySelector('select[name="group_id"]');
+                const baseUnitSelect = form.querySelector('select[name="base_unit_id"]'); // Vẫn giữ select này
+
+                populateSelect(groupSelect, groups, 'group_id', 'name', false);
+                populateSelect(baseUnitSelect, units, 'unit_id', 'name', false); // Vẫn populate units
+
+                if (productId) {
+                    groupSelect.value = details.group_id;
+                    baseUnitSelect.value = details.base_unit_id; // Đặt đơn vị đã chọn
+                }
+
+                form.onsubmit = async (e) => {
+                    e.preventDefault();
+                    const dataToSave = Object.fromEntries(new FormData(form).entries());
+                    try {
+                        await apiRequest('save_product', {
+                            data: dataToSave
+                        });
+                        showToast('Lưu sản phẩm gốc thành công!');
+                        modal.style.display = 'none';
+                        loadAllVariants(); // Cập nhật bảng sau khi lưu sản phẩm gốc
+                    } catch (error) { }
+                };
+                modal.style.display = 'block';
+            }
+
+            // --- FORM THÊM/SỬA BIẾN THỂ ---
+            async function openVariantForm(variantId = null) {
+                const modal = createModal('variant-form-modal');
+                modal.innerHTML =
+                    `<div class="modal-content"><div class="modal-header"><h2 id="variant-form-title"></h2><span class="close-btn">&times;</span></div><form id="variant-form"></form></div>`;
+                const form = modal.querySelector('#variant-form');
+                const title = modal.querySelector('#variant-form-title');
+
+                currentVariantId = variantId; // Cập nhật variant_id hiện tại
+
+                let details = {};
+                if (variantId) {
+                    title.textContent = "Chỉnh Sửa Sản Phẩm Chi Tiết";
+                    // Nếu đang chỉnh sửa, nạp chi tiết từ API
+                    // CHỈ NẠP TỪ API NẾU KHÔNG CÓ DỮ LIỆU TẠM THỜI CẦN KHÔI PHỤC
+                    if (!shouldRestoreVariantForm) {
+                        details = await apiRequest('get_variant_details', {
+                            variant_id: variantId
+                        });
+                        variantFormState = {
+                            ...details
+                        }; // Lưu trạng thái ban đầu để khôi phục
+                    } else {
+                        details = {
+                            ...variantFormState
+                        }; // Sử dụng dữ liệu tạm nếu cờ khôi phục là true
+                    }
+                } else {
+                    title.textContent = "Thêm Sản Phẩm Chi Tiết Mới";
+                    // Nếu thêm mới, sử dụng dữ liệu tạm nếu có
+                    if (!shouldRestoreVariantForm) {
+                        details = {}; // Bắt đầu form trống nếu không cần khôi phục
+                        variantFormState = {}; // Đảm bảo trạng thái trống
+                    } else {
+                        details = {
+                            ...variantFormState
+                        }; // Sử dụng dữ liệu tạm nếu cờ khôi phục là true
+                    }
+                }
+
+                // Reset cờ khôi phục sau khi đã sử dụng
+                shouldRestoreVariantForm = false;
+
+                const [allAttributes, allLoai, allBaseProducts] = await Promise.all([
+                    apiRequest('get_all_attributes'),
+                    apiRequest('get_all_loai'),
+                    apiRequest('get_all_base_products')
+                ]);
+
+                // Mảng các thuộc tính mà chúng ta sẽ tạo form-group
+                const attributeFields = [{
+                    name: 'Đường kính trong',
+                    dataAttributeName: 'Đường kính trong'
+                },
+                {
+                    name: 'Độ dày',
+                    dataAttributeName: 'Độ dày'
+                },
+                {
+                    name: 'Bản rộng',
+                    dataAttributeName: 'Bản rộng'
+                },
+                {
+                    name: 'ID Thông Số',
+                    dataAttributeName: 'ID Thông Số'
+                },
+                {
+                    name: 'Kích thước ren',
+                    dataAttributeName: 'Kích thước ren'
+                },
+                {
+                    name: 'Nguồn gốc',
+                    dataAttributeName: 'Nguồn gốc'
+                },
+                {
+                    name: 'Xử lý bề mặt',
+                    dataAttributeName: 'Xử lý bề mặt'
+                },
+                {
+                    name: 'Độ dày theo PUR',
+                    dataAttributeName: 'Độ dày theo PUR'
+                }
+                ];
+
+                let formHTML = `
+                <input type="hidden" name="variant_id" value="${currentVariantId || ''}">
+                <div class="form-grid">
+                    <div class="form-group"><label>Sản phẩm gốc (*)</label><select name="product_id" required></select></div>
+                    <div class="form-group"><label>Tên Biến Thể</label><input type="text" name="variant_name" required value="${details.variant_name || ''}"></div>
+                    <div class="form-group"><label>Mã Biến Thể (SKU)</label><input type="text" name="variant_sku" required value="${details.variant_sku || ''}" readonly></div>
+                    <div class="form-group"><label>Hậu tố SKU (ví dụ: TQ, HT)</label><input type="text" name="sku_suffix" value="${details.sku_suffix || ''}"></div>
+                    <div class="form-group"><label>Giá Gốc</label><input type="number" name="price" value="${details.price || 0}"></div>
+                    <div class="form-group"><label>Loại Phân Loại</label><select name="LoaiID"></select></div>
+                </div>
+                <hr style="margin: 15px 0;"><h4 style="margin-bottom: 15px;">Các thuộc tính</h4>
+                <div class="form-grid" id="attribute-form-grid">`;
+
+                attributeFields.forEach(field => {
+                    const attr = allAttributes.find(a => a.name === field.name);
+                    if (attr) {
+                        // Lấy giá trị đã chọn từ details (đã có thể là variantFormState)
+                        const selectedOptionId = details.selected_options ?
+                            details.selected_options.find(optId =>
+                                attr.options.some(o => Number(o.option_id) === Number(optId))) :
+                            null;
+
+                        formHTML +=
+                            `<div class="form-group" data-attribute-name-group="${attr.name}"><label>${attr.name}</label><div class="input-with-button"><select class="attribute-select" name="option_ids[]" data-attribute-id="${attr.attribute_id}" data-attribute-name="${attr.name}"><option value="">-- Không chọn --</option>${attr.options.map(opt => {
+                                const isSelected = (selectedOptionId && Number(opt.option_id) === Number(selectedOptionId));
+                                return `<option value="${opt.option_id}" ${isSelected ? 'selected' : ''}>${opt.value}</option>`;
+                            }).join('')}</select><button type="button" class="add-option-btn" title="Thêm tùy chọn mới">+</button></div></div>`;
+                    }
+                });
+
+                formHTML +=
+                    `</div><div class="modal-footer"><button type="submit" class="action-button" style="background-color: var(--success-color);">Lưu Biến Thể</button></div>`;
+                form.innerHTML = formHTML;
+
+                const baseProductSelect = form.querySelector('select[name="product_id"]');
+                const loaiSelect = form.querySelector('select[name="LoaiID"]');
+                const skuSuffixInput = form.querySelector('[name="sku_suffix"]');
+                const variantSkuInput = form.querySelector('[name="variant_sku"]');
+                const attributeFormGrid = form.querySelector('#attribute-form-grid');
+                const variantNameInput = form.querySelector('[name="variant_name"]');
+
+                populateSelect(baseProductSelect, allBaseProducts, 'product_id', 'name', false);
+                populateSelect(loaiSelect, allLoai, 'LoaiID', 'TenLoai', true);
+
+                // Khôi phục các giá trị đã chọn từ details (đã có thể là variantFormState)
+                if (details.product_id) baseProductSelect.value = details.product_id;
+                if (details.LoaiID) loaiSelect.value = details.LoaiID;
+
+                // Hàm để cập nhật hiển thị các trường thuộc tính
+                const updateAttributeVisibility = () => {
+                    const selectedBaseProductOption = baseProductSelect.options[baseProductSelect
+                        .selectedIndex];
+                    const skuPrefix = selectedBaseProductOption ? selectedBaseProductOption.dataset
+                        .skuPrefix.toUpperCase() : '';
+
+                    // Ẩn tất cả các nhóm thuộc tính trước
+                    attributeFormGrid.querySelectorAll('.form-group[data-attribute-name-group]').forEach(
+                        group => {
+                            group.classList.add('hidden');
+                        });
+
+                    // Hiển thị các thuộc tính dựa trên tiền tố SKU
+                    if (skuPrefix === 'CV' || skuPrefix === 'CT') {
+                        attributeFormGrid.querySelector('[data-attribute-name-group="Đường kính trong"]')
+                            ?.classList.remove('hidden');
+                        attributeFormGrid.querySelector('[data-attribute-name-group="Độ dày"]')?.classList
+                            .remove('hidden');
+                    } else if (skuPrefix === 'PUR-S' || skuPrefix === 'PUR-C') {
+                        attributeFormGrid.querySelector('[data-attribute-name-group="ID Thông Số"]')
+                            ?.classList.remove('hidden');
+                        attributeFormGrid.querySelector('[data-attribute-name-group="Đường kính trong"]')
+                            ?.classList.remove('hidden');
+                        attributeFormGrid.querySelector('[data-attribute-name-group="Độ dày"]')?.classList
+                            .remove('hidden');
+                        attributeFormGrid.querySelector('[data-attribute-name-group="Bản rộng"]')?.classList
+                            .remove('hidden');
+                    } else if (skuPrefix === 'ULA') {
+                        attributeFormGrid.querySelector('[data-attribute-name-group="ID Thông Số"]')
+                            ?.classList.remove('hidden');
+                        attributeFormGrid.querySelector('[data-attribute-name-group="Đường kính trong"]')
+                            ?.classList.remove('hidden');
+                        attributeFormGrid.querySelector('[data-attribute-name-group="Bản rộng"]')?.classList
+                            .remove('hidden');
+                        attributeFormGrid.querySelector('[data-attribute-name-group="Kích thước ren"]')
+                            ?.classList.remove('hidden');
+                        attributeFormGrid.querySelector('[data-attribute-name-group="Xử lý bề mặt"]')
+                            ?.classList.remove('hidden');
+                        attributeFormGrid.querySelector('[data-attribute-name-group="Độ dày theo PUR"]')
+                            ?.classList.remove('hidden');
+                    } else if (skuPrefix === 'ECU') {
+                        attributeFormGrid.querySelector('[data-attribute-name-group="Kích thước ren"]')
+                            ?.classList.remove('hidden');
+                    }
+                };
+
+
+                const generateSkuAndName = () => {
+                    const baseOpt = baseProductSelect.options[baseProductSelect.selectedIndex];
+                    if (!baseOpt) return;
+
+                    const baseProductName = baseOpt.textContent;
+                    const skuPrefix = baseOpt.dataset.skuPrefix ? baseOpt.dataset.skuPrefix.toUpperCase() :
+                        '';
+                    const namePrefix = baseOpt.dataset.namePrefix || '';
+
+                    let currentSkuSuffixForSku = '';
+                    let currentSkuSuffixForName = '';
+                    if (skuSuffixInput.value) {
+                        if (['PUR-S', 'PUR-C', 'ULA', 'ECU'].includes(skuPrefix)) {
+                            currentSkuSuffixForSku = `-${skuSuffixInput.value.toUpperCase()}`;
+                        } else if (['CV', 'CT'].includes(skuPrefix)) {
+                            currentSkuSuffixForSku = ` ${skuSuffixInput.value.toUpperCase()}`;
+                        }
+                        currentSkuSuffixForName = ` ${skuSuffixInput.value.toUpperCase()}`;
+                    }
+
+
+                    const getAttrVal = (attrName) => {
+                        const select = form.querySelector(`[data-attribute-name="${attrName}"]`);
+                        return select && select.value ? select.options[select.selectedIndex]
+                            .textContent : '';
+                    };
+
+                    let sku = '';
+                    let generatedVariantNameCore = '';
+
+                    if (skuPrefix === 'CV' || skuPrefix === 'CT') {
+                        const dkTrong = getAttrVal('Đường kính trong');
+                        const doDay = getAttrVal('Độ dày');
+
+                        sku = `${skuPrefix} ${dkTrong}x${doDay}${currentSkuSuffixForSku}`.replace(/ +/g,
+                            ' ').trim();
+                        generatedVariantNameCore = sku;
+                    } else if (skuPrefix === 'PUR-S' || skuPrefix === 'PUR-C') {
+                        const dkTrong = getAttrVal('Đường kính trong');
+                        const doDay = getAttrVal('Độ dày');
+                        const banRong = getAttrVal('Bản rộng');
+                        const idThongSo = getAttrVal('ID Thông Số');
+
+                        sku = `${skuPrefix} ${dkTrong}x${doDay}x${banRong}${currentSkuSuffixForSku}`
+                            .replace(/ +/g, ' ').trim();
+                        generatedVariantNameCore =
+                            `${idThongSo}x${doDay}x${banRong}${currentSkuSuffixForName}`.replace(/ +/g, ' ')
+                                .trim();
+                    } else if (skuPrefix === 'ULA') {
+                        const idThongSo = getAttrVal('ID Thông Số');
+                        const dkTrong = getAttrVal('Đường kính trong');
+                        const doDayTheoPur = getAttrVal('Độ dày theo PUR');
+                        const banRong = getAttrVal('Bản rộng');
+                        const kichThuocRen = getAttrVal('Kích thước ren');
+
+                        sku =
+                            `${skuPrefix} ${dkTrong}x${doDayTheoPur}-${kichThuocRen}${currentSkuSuffixForSku}`
+                                .replace(/ +/g, ' ').trim();
+                        generatedVariantNameCore = `${idThongSo}-${kichThuocRen}${currentSkuSuffixForName}`
+                            .replace(/ +/g, ' ').trim();
+                    } else if (skuPrefix === 'ECU') {
+                        const kichThuocRen = getAttrVal('Kích thước ren');
+                        sku = `${skuPrefix} ${kichThuocRen}${currentSkuSuffixForSku}`.replace(/ +/g, ' ')
+                            .trim();
+                        generatedVariantNameCore = sku;
+                    } else {
+                        sku = `${skuPrefix}${currentSkuSuffixForSku}`.trim();
+                        generatedVariantNameCore = `${namePrefix}${currentSkuSuffixForName}`.trim();
+                    }
+
+                    variantSkuInput.value = sku;
+                    // Ghép Tiền tố Tên (Name Prefix) vào đầu tên biến thể nếu có, nếu không thì dùng Tên sản phẩm gốc
+                    const finalVariantName = namePrefix ? `${namePrefix} ${generatedVariantNameCore}`
+                        .trim() : `${baseProductName} ${generatedVariantNameCore}`.trim();
+                    variantNameInput.value = finalVariantName;
+                };
+
+                // Event listeners
+                baseProductSelect.addEventListener('change', () => {
+                    // Khi thay đổi sản phẩm gốc, reset các select thuộc tính và sku_suffix
+                    attributeFormGrid.querySelectorAll('.attribute-select').forEach(select => {
+                        select.value = ''; // Đặt lại giá trị mặc định
+                    });
+                    skuSuffixInput.value = ''; // Xóa hậu tố
+
+                    updateAttributeVisibility();
+                    generateSkuAndName();
+                });
+
+                form.addEventListener('change', e => {
+                    if (e.target.tagName === 'SELECT' || e.target.name === 'sku_suffix') {
+                        generateSkuAndName();
+                    }
+                });
+
+                // Generate SKU and Name and update visibility on initial load
+                updateAttributeVisibility();
+                generateSkuAndName();
+
+                form.addEventListener('click', async e => {
+                    if (e.target.classList.contains('add-option-btn')) {
+                        const select = e.target.previousElementSibling;
+                        const attrId = select.dataset.attributeId;
+
+                        // Lấy tất cả dữ liệu từ form hiện tại trước khi đóng modal
+                        const currentFormData = new FormData(form);
+                        variantFormState = { // Lưu trữ toàn bộ trạng thái form
+                            product_id: currentFormData.get('product_id'),
+                            variant_name: currentFormData.get('variant_name'),
+                            variant_sku: currentFormData.get('variant_sku'),
+                            sku_suffix: currentFormData.get('sku_suffix'),
+                            price: currentFormData.get('price'),
+                            LoaiID: currentFormData.get('LoaiID'),
+                            // Chỉ lấy option_id của các select ĐANG HIỂN THỊ và CÓ GIÁ TRỊ
+                            selected_options: Array.from(form.querySelectorAll(
+                                '.attribute-select:not(.hidden select)'))
+                                .filter(s => s.value) // Lọc các select có giá trị
+                                .map(s => Number(s.value)) // Lấy giá trị và chuyển sang số
+                        };
+
+                        // Đặt cờ cho biết chúng ta sẽ khôi phục form biến thể
+                        shouldRestoreVariantForm = true;
+
+                        // Hàm callback sau khi modal quản lý dữ liệu đóng
+                        const callback = () => {
+                            openVariantForm(
+                                currentVariantId); // Gọi lại openVariantForm để khôi phục và cập nhật
+                            // Không reset variantFormState ở đây, để openVariantForm tự dùng
+                        };
+
+                        modal.style.display = 'none'; // Ẩn modal hiện tại
+                        openDataManager('attributes', attrId, callback); // Mở modal quản lý dữ liệu
+                    }
+                });
+                form.onsubmit = async (e) => {
+                    e.preventDefault();
+                    const dataToSave = {
+                        ...Object.fromEntries(new FormData(form).entries()),
+                        option_ids: Array.from(form.querySelectorAll(
+                            '.attribute-select:not(.hidden select)')).map(s =>
+                                s.value).filter(Boolean)
+                    };
+                    try {
+                        await apiRequest('save_variant', {
+                            data: dataToSave
+                        });
+                        showToast('Lưu biến thể thành công!');
+                        modal.style.display = 'none';
+                        loadAllVariants(); // Cập nhật bảng sau khi lưu biến thể
+                        variantFormState = {}; // Xóa trạng thái tạm sau khi lưu thành công
+                    } catch (error) {
+                        console.error("Lỗi khi lưu biến thể:", error);
+                    }
+                };
+                modal.style.display = 'block';
+            }
+
+            // --- QUẢN LÝ TỒN KHO ---
+            async function openInventoryManager(variantId, variantSku) {
+                const modal = createModal('inventory-modal');
+                modal.innerHTML =
+                    `<div class="modal-content" style="max-width: 600px;"><div class="modal-header"><h2>Tồn kho: ${variantSku}</h2><span class="close-btn">&times;</span></div><form id="inventory-form"></form></div>`;
+                const form = modal.querySelector('#inventory-form');
+                form.innerHTML = 'Đang tải...';
+                modal.style.display = 'block';
+
+                console.log('openInventoryManager: Đang mở modal cho variantId:', variantId, 'variantSku:',
+                    variantSku);
+
+                try {
+                    const inventoryData = await apiRequest('get_inventory_for_variant', {
+                        variant_id: variantId
+                    });
+                    console.log('openInventoryManager: Dữ liệu tồn kho từ API:', inventoryData);
+
+                    // Kiểm tra sự tồn tại của unit_id để hiển thị thông báo phù hợp
+                    if (typeof inventoryData.unit_id === 'undefined' || inventoryData.unit_id === null) {
+                        // Nếu sản phẩm gốc không có đơn vị tính được thiết lập, hiển thị cảnh báo
+                        form.innerHTML =
+                            '<p style="color: orange;">Sản phẩm gốc chưa được thiết lập đơn vị cơ sở. Tồn kho sẽ hiển thị mà không có đơn vị.</p>';
+                        // Vẫn cho phép nhập số lượng nếu muốn, nhưng không có đơn vị.
+                        // Nếu bạn muốn chặn hoàn toàn việc quản lý tồn kho khi không có đơn vị, bạn có thể `return;` ở đây.
+                    }
+
+                    const currentQuantity = parseInt(inventoryData.quantity || 0);
+                    const minimumStockLevel = parseInt(inventoryData.minimum_stock_level || 0);
+                    // Lấy tên đơn vị từ dữ liệu trả về của API, mà API lấy từ sản phẩm gốc
+                    const unitName = inventoryData.unit_name || 'Đơn vị';
+                    // unitId không còn được sử dụng để cập nhật tồn kho, nhưng vẫn có thể dùng để hiển thị nếu cần
+                    const unitId = inventoryData.unit_id;
+
+                    let formHTML = '<p>Nhập số lượng mới cho đơn vị cơ sở.</p><div class="form-grid">';
+                    formHTML +=
+                        `<div class="form-group"><label>Số lượng (${unitName})</label><input type="number" name="quantity" value="${currentQuantity}"></div>`;
+                    formHTML +=
+                        `<div class="form-group"><label>Định mức tồn kho tối thiểu (${unitName})</label><input type="number" name="minimum_stock_level" value="${minimumStockLevel}"></div>`;
+                    formHTML +=
+                        `</div><div class="modal-footer"><button type="submit" class="action-button" style="background-color: var(--success-color);">Lưu Tồn Kho</button></div>`;
+                    form.innerHTML = formHTML;
+
+                    form.onsubmit = async (e) => {
+                        e.preventDefault();
+                        const newQuantity = parseInt(form.querySelector('[name="quantity"]').value ||
+                            0);
+                        const newMinimumStockLevel = parseInt(form.querySelector(
+                            '[name="minimum_stock_level"]').value || 0);
+
+                        try {
+                            await apiRequest('update_inventory', {
+                                variant_id: variantId,
+                                quantity: newQuantity,
+                                // KHÔNG TRUYỀN unit_id NỮA VÌ NÓ KHÔNG CÒN TRONG BẢNG variant_inventory
+                                // unit_id: unitId, 
+                                minimum_stock_level: newMinimumStockLevel
+                            });
+                            showToast("Cập nhật tồn kho thành công!");
+                            modal.style.display = 'none';
+                            loadAllVariants(); // Cập nhật bảng sau khi cập nhật tồn kho
+                        } catch (err) {
+                            console.error("Lỗi khi cập nhật tồn kho:", err);
+                        }
+                    };
+                } catch (err) {
+                    console.error("Lỗi trong openInventoryManager:", err);
+                    form.innerHTML =
+                        `<p style="color: red;">Đã xảy ra lỗi khi tải dữ liệu tồn kho: ${err.message}. Vui lòng kiểm tra console để biết chi tiết.</p>`;
+                }
+            }
+
+            // --- QUẢN LÝ DỮ LIỆU CHUNG ---
+            async function openDataManager(defaultTab = 'attributes', defaultItemId = null, onCloseCallback =
+                null) {
+                const modal = createModal('data-manager-modal');
+                modal.innerHTML =
+                    `<div class="modal-content" style="max-width: 800px;"><div class="modal-header"><h2><i class="fa fa-database"></i> Quản lý Dữ liệu Chung</h2><span class="close-btn">&times;</span></div><div id="data-manager-body"></div></div>`;
+                const body = modal.querySelector('#data-manager-body');
+                body.innerHTML =
+                    `<div class="tabs"><span class="tab-link" data-tab="attributes">Thuộc tính</span><span class="tab-link" data-tab="types">Loại Sản phẩm</span><span class="tab-link" data-tab="groups">Nhóm Sản phẩm</span><span class="tab-link" data-tab="units">Đơn vị tính</span></div><div id="attributes" class="tab-content"></div><div id="types" class="tab-content"></div><div id="groups" class="tab-content"></div><div id="units" class="tab-content"></div>`;
+                modal.style.display = 'block';
+                modal.onCloseCallback = onCloseCallback; // Gán callback từ openVariantForm
+
+                const openTab = (tabName) => {
+                    body.querySelectorAll('.tab-link, .tab-content').forEach(el => el.classList.remove(
+                        'active'));
+                    body.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+                    body.querySelector(`#${tabName}`).classList.add('active');
+                    loadDataForTab(tabName, defaultItemId);
+                };
+                body.querySelector('.tabs').addEventListener('click', e => {
+                    if (e.target.classList.contains('tab-link')) openTab(e.target.dataset.tab);
+                });
+                openTab(defaultTab);
+            }
+
+            async function loadDataForTab(tabName, defaultItemId = null) {
+                const container = document.getElementById(tabName);
+                if (tabName === 'attributes') loadAttributeManager(container, defaultItemId);
+                else if (tabName === 'types') loadSimpleDataManager(container, 'Loại SP', 'type',
+                    'get_all_loai', 'LoaiID', 'TenLoai');
+                else if (tabName === 'groups') loadSimpleDataManager(container, 'Nhóm SP', 'group',
+                    'get_product_groups', 'group_id', 'name');
+                else if (tabName === 'units') loadSimpleDataManager(container, 'Đơn vị tính', 'unit',
+                    'get_all_units', 'unit_id', 'name');
+            }
+
+            async function loadAttributeManager(container, defaultAttrId = null) {
+                container.innerHTML = 'Đang tải...';
+                const attributes = await apiRequest('get_attributes_for_management');
+                const listHTML = attributes.map(attr =>
+                    `<li class="attributes-list-item" data-id="${attr.attribute_id}" data-name="${attr.name}">${attr.name}</li>`
+                ).join('');
+                container.innerHTML =
+                    `<div class="attribute-manager-grid"><div class="attributes-list"><h3>Loại thuộc tính</h3><ul>${listHTML}</ul></div><div class="options-container"><h3 id="options-title">Chọn một loại thuộc tính</h3><div id="options-list-wrapper"></div></div></div>`;
+                const attrList = container.querySelector('.attributes-list');
+                attrList.addEventListener('click', e => {
+                    if (e.target.classList.contains('attributes-list-item')) {
+                        attrList.querySelectorAll('.attributes-list-item').forEach(el => el.classList
+                            .remove('active'));
+                        e.target.classList.add('active');
+                        loadOptionsForAttribute(e.target.dataset.id, e.target.dataset.name);
+                    }
+                });
+                if (defaultAttrId) {
+                    const defaultAttrElement = attrList.querySelector(`[data-id='${defaultAttrId}']`);
+                    if (defaultAttrElement) defaultAttrElement.click();
+                }
+            }
+
+            async function loadOptionsForAttribute(attributeId, attributeName) {
+                document.getElementById('options-title').textContent = `Các tùy chọn cho: ${attributeName}`;
+                const wrapper = document.getElementById('options-list-wrapper');
+                wrapper.innerHTML = 'Đang tải...';
+                const options = await apiRequest('get_options_for_attribute', {
+                    attribute_id: attributeId
+                });
+                let optionsHTML = '<ul class="options-list">';
+                options.forEach(opt => {
+                    optionsHTML +=
+                        `<li class="options-list-item" data-id="${opt.option_id}"><input type="text" value="${opt.value}"><div class="option-actions"><button class="save-option" title="Lưu"><i class="fa fa-save icon-save"></i></button><button class="delete-option" title="Xóa"><i class="fa fa-trash-can icon-delete"></i></button></div></li>`;
+                });
+                optionsHTML +=
+                    `</ul><form class="add-item-form"><input type="text" placeholder="Nhập giá trị tùy chọn mới" required><button type="submit" class="action-button" style="background-color: var(--success-color);">Thêm</button></form>`;
+                wrapper.innerHTML = optionsHTML;
+                wrapper.querySelector('.add-item-form').addEventListener('submit', async e => {
+                    e.preventDefault();
+                    const newValue = e.target.querySelector('input').value;
+                    if (newValue) {
+                        await apiRequest('create_attribute_option', {
+                            attribute_id: attributeId,
+                            value: newValue
+                        });
+                        showToast('Đã thêm!');
+                        loadOptionsForAttribute(attributeId, attributeName);
+                    }
+                });
+                wrapper.addEventListener('click', async e => {
+                    const button = e.target.closest('button');
+                    if (!button) return;
+                    const li = button.closest('li');
+                    if (!li) return;
+                    if (button.classList.contains('save-option')) {
+                        await apiRequest('update_attribute_option', {
+                            option_id: li.dataset.id,
+                            value: li.querySelector('input').value
+                        });
+                        showToast('Đã cập nhật!');
+                    } else if (button.classList.contains('delete-option')) {
+                        if (confirm('Bạn chắc chắn muốn xóa?')) {
+                            try {
+                                await apiRequest('delete_attribute_option', {
+                                    option_id: li.dataset.id
+                                });
+                                li.remove();
+                                showToast('Đã xóa!');
+                            } catch (err) { }
+                        }
+                    }
+                });
+            }
+
+            async function loadSimpleDataManager(container, title, type, getAction, idField, nameField) {
+                container.innerHTML = 'Đang tải...';
+                const items = await apiRequest(getAction);
+                let itemsHTML = `<h3>Danh sách ${title}</h3><ul class="data-item-list">`;
+                items.forEach(item => {
+                    itemsHTML +=
+                        `<li class="data-item" data-id="${item[idField]}"><input type="text" value="${item[nameField]}"><div class="item-actions"><button class="save-item" title="Lưu"><i class="fa fa-save icon-save"></i></button><button class="delete-item" title="Xóa"><i class="fa fa-trash-can icon-delete"></i></button></div></li>`;
+                });
+                itemsHTML +=
+                    `</ul><form class="add-item-form"><input type="text" placeholder="Nhập tên mới" required><button type="submit" class="action-button" style="background-color: var(--success-color);">Thêm</button></form>`;
+                container.innerHTML = itemsHTML;
+                container.querySelector('.add-item-form').addEventListener('submit', async e => {
+                    e.preventDefault();
+                    const newValue = e.target.querySelector('input').value;
+                    if (newValue) {
+                        await apiRequest('create_data_item', {
+                            value: newValue,
+                            type: type
+                        });
+                        showToast('Đã thêm mới!');
+                        loadSimpleDataManager(container, title, type, getAction, idField,
+                            nameField);
+                    }
+                });
+                container.addEventListener('click', async e => {
+                    const button = e.target.closest('button');
+                    if (!button) return;
+                    const li = button.closest('li');
+                    if (li) {
+                        if (button.classList.contains('save-item')) {
+                            await apiRequest('save_data_item', {
+                                id: li.dataset.id,
+                                value: li.querySelector('input').value,
+                                type: type
+                            });
+                            showToast('Đã cập nhật!');
+                        } else if (button.classList.contains('delete-item')) {
+                            if (confirm(`Bạn chắc chắn muốn xóa?`)) {
+                                try {
+                                    await apiRequest('delete_data_item', {
+                                        id: li.dataset.id,
+                                        type: type
+                                    });
+                                    li.remove();
+                                    showToast('Đã xóa!');
+                                } catch (err) { }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // --- EVENT LISTENERS CHUNG ---
+            function setupEventListeners() {
+                document.getElementById("add-variant-btn").addEventListener("click", () => openVariantForm());
+                document.getElementById("add-product-btn").addEventListener("click", () => openProductForm());
+                document.getElementById("data-manager-btn").addEventListener("click", () => openDataManager());
+                document.getElementById("clear-filters-btn").addEventListener("click", () => {
+                    document.getElementById('filter-group-id').value = '';
+                    document.getElementById('filter-loai-id').value = '';
+                    document.getElementById('filter-field').value = '';
+                    if (variantsTable) variantsTable.clearFilter();
+                });
+                document.getElementById('delete-selected-btn').addEventListener('click', async () => {
+                    if (!variantsTable) return;
+                    const selectedData = variantsTable.getSelectedData();
+                    if (selectedData.length === 0) return;
+                    if (confirm(`Bạn có chắc muốn xóa ${selectedData.length} sản phẩm đã chọn?`)) {
+                        const idsToDelete = selectedData.map(row => row.variant_id);
+                        try {
+                            await apiRequest('delete_multiple_variants', {
+                                ids: idsToDelete
+                            });
+                            showToast(`Đã xóa thành công ${idsToDelete.length} sản phẩm.`);
+                            loadAllVariants();
+                        } catch (error) { }
+                    }
+                });
+                document.body.addEventListener('click', e => {
+                    if (e.target.classList.contains('close-btn')) {
+                        const modal = e.target.closest('.modal');
+                        // Chỉ gọi callback nếu nó được thiết lập cho mục đích khôi phục form (tức là từ nút '+')
+                        // Hoặc nếu nó là modal chính (data-manager-modal) và có callback để xử lý việc đóng chung
+                        if (modal.id === 'data-manager-modal') {
+                            // Chỉ gọi callback nếu cờ khôi phục là true, TỨC LÀ NÓ ĐƯỢC MỞ TỪ NÚT '+'
+                            if (modal.onCloseCallback && shouldRestoreVariantForm) {
+                                modal.onCloseCallback();
+                            }
+                            // Sau khi xử lý (hoặc không xử lý) callback, luôn reset cờ và callback
+                            shouldRestoreVariantForm = false;
+                            modal.onCloseCallback = null;
+                        }
+                        modal.style.display = 'none'; // Luôn ẩn modal
+                    }
+                });
+            }
+
+            // --- KHỞI CHẠY ---
+            initializeTable();
+            initializeFilters();
+            setupEventListeners();
+        });
+    </script>
+</body>
+
+</html>
